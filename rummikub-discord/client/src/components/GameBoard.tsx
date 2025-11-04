@@ -47,13 +47,15 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
       id="game-board"
       ref={drop}
       className={`
-        relative w-full h-full min-h-[400px]
-        bg-gradient-to-br from-green-700 to-green-800
+        relative w-full h-full
         rounded-xl shadow-inner
         p-6
         overflow-auto
         ${isOver ? 'ring-4 ring-yellow-400 ring-opacity-50' : ''}
       `}
+      style={{
+        backgroundColor: '#8B6A31'
+      }}
     >
       {/* Grid lines for visual guidance */}
       <div className="absolute inset-0 pointer-events-none opacity-10">
@@ -70,12 +72,12 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
       </div>
 
       {/* Tiles on board */}
-      <div className="relative z-10">
+      <div className="relative z-10 w-full h-full">
         {tiles.length === 0 ? (
-          <div className="flex items-center justify-center h-64 text-white/40 text-center">
+          <div className="flex items-center justify-center h-full text-white/60 text-center">
             <div>
-              <p className="text-xl mb-2">Board is empty</p>
-              <p className="text-sm">Drag tiles here to form melds</p>
+              <p className="text-2xl font-semibold mb-2">Board is empty</p>
+              <p className="text-lg">Drag tiles here to form melds</p>
             </div>
           </div>
         ) : (

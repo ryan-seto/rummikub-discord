@@ -7,10 +7,10 @@ interface PlayerListProps {
   myPlayerId: string | null;
 }
 
-export const PlayerList: React.FC<PlayerListProps> = ({ 
-  players, 
+export const PlayerList: React.FC<PlayerListProps> = ({
+  players,
   currentPlayerIndex,
-  myPlayerId 
+  myPlayerId
 }) => {
   return (
     <div className="bg-gray-800 rounded-lg p-4 shadow-lg">
@@ -25,12 +25,10 @@ export const PlayerList: React.FC<PlayerListProps> = ({
               key={player.id}
               className={`
                 flex items-center justify-between p-3 rounded-lg
+                bg-gray-700
                 transition-all duration-200
-                ${isCurrentPlayer 
-                  ? 'bg-green-600 shadow-lg ring-2 ring-green-400' 
-                  : 'bg-gray-700'
-                }
-                ${isMe ? 'border-2 border-blue-400' : ''}
+                ${isCurrentPlayer ? 'ring-2 ring-green-400 shadow-lg' : ''}
+                ${isMe ? 'border-2 border-blue-400' : 'border-2 border-transparent'}
               `}
             >
               <div className="flex items-center gap-3">
@@ -49,30 +47,30 @@ export const PlayerList: React.FC<PlayerListProps> = ({
 
                 {/* Player info */}
                 <div>
-                  <p className="text-white font-semibold">
-                    {player.username}
-                    {isMe && <span className="ml-2 text-xs text-blue-300">(You)</span>}
-                  </p>
-                  <p className="text-gray-300 text-sm">
-                    {player.tilesCount} tiles
-                    {player.hasPlayedInitial && (
-                      <span className="ml-2 text-green-300">✓ Initial</span>
+                  <div className="flex items-center gap-2">
+                    <span className={`font-semibold ${isMe ? 'text-blue-400' : 'text-white'}`}>
+                      {player.username}
+                    </span>
+                    {isMe && <span className="text-xs text-blue-300">(You)</span>}
+
+                    {/* Initial meld status badges */}
+                    {!player.hasPlayedInitial && (
+                      <span className="text-xs bg-yellow-900/50 text-yellow-300 px-2 py-0.5 rounded border border-yellow-600/30">
+                        Need 30pts
+                      </span>
                     )}
+                    {player.hasPlayedInitial && (
+                      <span className="text-xs text-green-400 font-bold">✓</span>
+                    )}
+                  </div>
+
+                  <p className="text-gray-300 text-sm mt-1">
+                    {player.tilesCount} tiles
                   </p>
                 </div>
               </div>
 
-              {/* Turn indicator */}
-              {isCurrentPlayer && (
-                <div className="flex items-center gap-2">
-                  <div className="animate-pulse w-3 h-3 bg-yellow-400 rounded-full" />
-                  <span className="text-yellow-400 text-sm font-semibold">
-                    Turn
-                  </span>
-                </div>
-              )}
-
-              {/* Ready indicator */}
+              {/* Ready indicator - only show if not ready */}
               {!player.isReady && (
                 <span className="text-gray-400 text-xs">
                   Not ready

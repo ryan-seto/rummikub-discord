@@ -28,9 +28,9 @@ export const Tile: React.FC<TileProps> = ({
   }), [tile, isDraggable, fromBoard]);
 
   const sizeClasses = {
-    small: 'w-12 h-16 text-sm',
-    medium: 'w-16 h-20 text-xl',
-    large: 'w-20 h-24 text-2xl',
+    small: 'w-12 h-16 text-base',
+    medium: 'w-16 h-20 text-3xl',
+    large: 'w-20 h-24 text-4xl',
   };
 
   const colorClasses = {
@@ -44,10 +44,16 @@ export const Tile: React.FC<TileProps> = ({
     return (
       <div
         ref={drag}
-        className={`${sizeClasses[size]} bg-gradient-to-br from-purple-400 to-pink-500 rounded-lg shadow-lg flex items-center justify-center font-bold cursor-move ${isDragging ? 'opacity-50' : 'opacity-100'
-          }`}
+        className={`${sizeClasses[size]} bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg shadow-lg border-2 border-amber-200 cursor-move relative ${isDragging ? 'opacity-50' : 'opacity-100'}`}
       >
-        <span className="text-white">🃏</span>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span style={{
+            fontSize: '48px',
+            lineHeight: '1',
+            display: 'block',
+            transform: 'translateY(-1px)'  // ← Fine-tune positioning
+          }}>🃏</span>
+        </div>
       </div>
     );
   }

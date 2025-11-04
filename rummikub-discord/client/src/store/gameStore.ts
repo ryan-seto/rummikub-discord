@@ -5,6 +5,8 @@ interface GameStore extends GameState {
   // Local player state
   myPlayerId: string | null;
   myHand: PlayerHand;
+  canDraw: boolean;
+  canEndTurn: boolean;
 
   // Actions now call server APIs
   initializeGame: (channelId: string, players: Player[]) => Promise<void>;
@@ -13,7 +15,7 @@ interface GameStore extends GameState {
   drawTile: (channelId: string, playerId: string) => Promise<void>;
   placeTile: (channelId: string, playerId: string, tile: Tile, position: { x: number; y: number }, setId: string) => Promise<void>;
   moveTile: (channelId: string, tileId: string, position: { x: number; y: number }, setId: string) => Promise<void>;
-  endTurn: (channelId: string) => Promise<void>;
+  endTurn: (channelId: string, playerId?: string) => Promise<void>;  // ← Add playerId param
   undoTurn: (channelId: string, playerId: string) => Promise<void>;
   undoLastAction: (channelId: string, playerId: string) => Promise<void>;
   setMyPlayerId: (id: string) => void;
@@ -34,6 +36,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   turnTimeRemaining: 120,
   myPlayerId: null,
   myHand: { tiles: [] },
+  canDraw: true,
+  canEndTurn: false,
 
   // Initialize game on server
   initializeGame: async (channelId: string, players: Player[]) => {
@@ -152,10 +156,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
   // Move tile on board
   moveTile: async (channelId: string, tileId: string, position: { x: number; y: number }, setId: string) => {
     console.log('🔄 Moving tile on server...');
+    const { myPlayerId } = get();  // ← Get playerId
     const response = await fetch(`/api/games/${channelId}/move`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tileId, newPosition: position, newSetId: setId }),
+      body: JSON.stringify({ tileId, newPosition: position, newSetId: setId, playerId: myPlayerId }),  // ← Add playerId
     });
 
     if (!response.ok) {
@@ -168,16 +173,22 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   // End turn on server
-  endTurn: async (channelId: string) => {
+  endTurn: async (channelId: string, playerId?: string) => {  // ← Add playerId param
     console.log('🔄 Ending turn on server...');
     const response = await fetch(`/api/games/${channelId}/endturn`, {
       method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ playerId }),  // ← Send playerId
     });
 
     if (!response.ok) {
       const errorData = await response.json();
       console.error('❌ Server rejected turn end:', errorData);
-      throw new Error(errorData.error || 'Failed to end turn');
+
+      // Include the full error data in the thrown error
+      const error: any = new Error(errorData.error || 'Failed to end turn');
+      error.response = { data: errorData };  // ← Attach response data
+      throw error;
     }
 
     console.log('✅ Turn ended');

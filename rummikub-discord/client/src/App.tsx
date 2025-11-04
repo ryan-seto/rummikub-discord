@@ -24,6 +24,8 @@ function App() {
     myHand,
     myPlayerId,
     turnTimeRemaining,
+    canDraw,
+    canEndTurn,
     setMyPlayerId,
     initializeGame,
     fetchMyHand,
@@ -149,12 +151,23 @@ function App() {
 
     try {
       console.log('🔄 Attempting to end turn');
-      await endTurn(channelId);
+      await endTurn(channelId, myPlayerId || undefined);
       setTurnError(null);
       console.log('✅ Turn ended successfully');
     } catch (error: any) {
       console.error('❌ End turn failed:', error);
-      setTurnError(error.message || 'Invalid board! Please arrange tiles into valid runs or groups.');
+
+      // Extract error data from response
+      const errorData = error.response?.data;
+      const errorMsg = errorData?.error || error.message || 'Invalid board';
+      const totalValue = errorData?.totalValue;
+
+      // Show point total if available
+      const displayMsg = totalValue !== undefined
+        ? `${errorMsg} (${totalValue} points)`
+        : errorMsg;
+
+      setTurnError(displayMsg);
       setTimeout(() => setTurnError(null), 5000);
     }
   };
@@ -296,12 +309,23 @@ function App() {
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="bg-gray-800 rounded-lg p-4 mb-4 shadow-lg">
-            <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">
-              Rummikub
-            </h1>
-            <p className="text-gray-400">
-              {isMyTurn ? "It's your turn!" : `${players[currentPlayerIndex]?.username}'s turn`}
-            </p>
+            <div className="flex items-center justify-between">
+              <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">
+                Rummy
+              </h1>
+
+              {/* Turn indicator */}
+              {isMyTurn ? (
+                <div className="flex items-center gap-2 bg-green-600 px-4 py-2 rounded-lg animate-pulse">
+                  <div className="w-3 h-3 bg-yellow-400 rounded-full" />  {/* ← Removed animate-pulse */}
+                  <span className="text-white font-bold text-lg">Your Turn!</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 bg-gray-700 px-4 py-2 rounded-lg">
+                  <span className="text-gray-400 font-semibold">{players[currentPlayerIndex]?.username}'s turn</span>
+                </div>
+              )}
+            </div>
 
             {turnError && (
               <div className="mt-3 bg-red-600 text-white px-4 py-3 rounded-lg font-semibold animate-pulse">
@@ -312,7 +336,7 @@ function App() {
 
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-4">
             {/* Game Board */}
-            <div className="lg:col-span-3">
+            <div className="lg:col-span-3 min-h-[600px]">
               <GameBoard
                 tiles={board}
                 onTileDrop={handleTileDrop}
@@ -323,13 +347,17 @@ function App() {
             <div className="space-y-4">
               <GameControls
                 isMyTurn={!!isMyTurn}
-                canEndTurn={board.length > 0}
+                canEndTurn={canEndTurn}
+                canDraw={canDraw}
                 timeRemaining={turnTimeRemaining}
                 onDrawTile={handleDrawTile}
                 onEndTurn={handleEndTurn}
                 onUndo={handleUndoTurn}
                 onUndoLast={handleUndoLastAction}
                 poolSize={pool.length}
+                players={players}
+                currentPlayerIndex={currentPlayerIndex}
+                myPlayerId={myPlayerId}
               />
 
               <PlayerList
