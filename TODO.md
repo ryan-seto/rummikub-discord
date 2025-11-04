@@ -1,0 +1,5 @@
+- Need to test logic surrounding drawing a tile after certian actions have occurred 
+- End turn does not draw a tile for you automatically
+- Change users to display name instead of Discord username
+- Test first meld logic (need >30 points)
+- Test end game phase
