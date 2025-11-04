@@ -5,24 +5,34 @@ import { Tile as TileType, TileOnBoard } from '../types/game';
 
 interface GameBoardProps {
   tiles: TileOnBoard[];
-  onTileDrop?: (tile: TileType, position: { x: number; y: number }) => void;
+  onTileDrop: (tile: TileType, position: { x: number; y: number }, fromBoard?: boolean, tileId?: string) => void; // ← Fixed signature
 }
 
 export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
   const [{ isOver }, drop] = useDrop(
     () => ({
-      accept: 'TILE',
-      drop: (item: TileType, monitor) => {
+      accept: 'tile',
+      drop: (item: { tile: TileType; fromBoard?: boolean }, monitor) => {
+        console.log('🎯 Drop detected:', item);
+
         const offset = monitor.getClientOffset();
-        if (offset && onTileDrop) {
-          // Calculate position relative to board
+        if (offset) {
+          console.log('📍 Offset:', offset);
+
           const boardElement = document.getElementById('game-board');
           if (boardElement) {
             const rect = boardElement.getBoundingClientRect();
-            const x = Math.floor((offset.x - rect.left) / 60); // 60px tile width + gap
-            const y = Math.floor((offset.y - rect.top) / 90); // 90px tile height + gap
-            onTileDrop(item, { x, y });
+            const x = Math.floor((offset.x - rect.left) / 70);
+            const y = Math.floor((offset.y - rect.top) / 90);
+
+            console.log('📐 Calculated position:', { x, y });
+
+            onTileDrop(item.tile, { x, y }, item.fromBoard, item.tile.id);
+          } else {
+            console.log('❌ Board element not found');
           }
+        } else {
+          console.log('❌ No offset');
         }
       },
       collect: (monitor) => ({
@@ -38,7 +48,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
       ref={drop}
       className={`
         relative w-full h-full min-h-[400px]
-        bg-gradient-to-br from-rummikub-board to-rummikub-boardLight
+        bg-gradient-to-br from-green-700 to-green-800
         rounded-xl shadow-inner
         p-6
         overflow-auto
@@ -74,25 +84,20 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
               key={tile.id}
               style={{
                 position: 'absolute',
-                left: `${tile.position.x * 60}px`,
+                left: `${tile.position.x * 70}px`,
                 top: `${tile.position.y * 90}px`,
                 zIndex: 10,
               }}
             >
-              <Tile tile={tile} draggable={false} />
+              <Tile
+                tile={tile}
+                isDraggable={true}
+                fromBoard={true}
+              />
             </div>
           ))
         )}
       </div>
-
-      {/* Drop zone indicator */}
-      {isOver && (
-        <div className="absolute inset-0 bg-yellow-400/10 border-4 border-dashed border-yellow-400 rounded-xl pointer-events-none z-20 flex items-center justify-center">
-          <div className="text-yellow-400 text-2xl font-bold bg-black/50 px-6 py-3 rounded-lg">
-            Drop tile here
-          </div>
-        </div>
-      )}
     </div>
   );
 };

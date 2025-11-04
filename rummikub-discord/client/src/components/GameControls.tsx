@@ -7,6 +7,7 @@ interface GameControlsProps {
   onDrawTile: () => void;
   onEndTurn: () => void;
   onUndo: () => void;
+  onUndoLast: () => void;
   poolSize: number;
 }
 
@@ -17,6 +18,7 @@ export const GameControls: React.FC<GameControlsProps> = ({
   onDrawTile,
   onEndTurn,
   onUndo,
+  onUndoLast,
   poolSize,
 }) => {
   const minutes = Math.floor(timeRemaining / 60);
@@ -27,7 +29,7 @@ export const GameControls: React.FC<GameControlsProps> = ({
       {/* Timer */}
       <div className="text-center">
         <div className="text-gray-400 text-sm mb-1">Time Remaining</div>
-        <div 
+        <div
           className={`
             text-3xl font-bold font-mono
             ${timeRemaining < 30 ? 'text-red-500 animate-pulse' : 'text-white'}
@@ -73,6 +75,18 @@ export const GameControls: React.FC<GameControlsProps> = ({
           `}
         >
           ↩️ Undo Turn
+        </button>
+
+        <button
+          onClick={onUndoLast}
+          disabled={!isMyTurn}
+          className={`w-full py-3 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 ${isMyTurn
+              ? 'bg-orange-600 hover:bg-orange-700 text-white shadow-lg'
+              : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+            }`}
+        >
+          <span>↶</span>
+          ↩️ Undo Last
         </button>
 
         <button

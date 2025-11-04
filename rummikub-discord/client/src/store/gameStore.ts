@@ -12,8 +12,10 @@ interface GameStore extends GameState {
   startGame: (channelId: string) => Promise<void>;
   drawTile: (channelId: string, playerId: string) => Promise<void>;
   placeTile: (channelId: string, playerId: string, tile: Tile, position: { x: number; y: number }, setId: string) => Promise<void>;
+  moveTile: (channelId: string, tileId: string, position: { x: number; y: number }, setId: string) => Promise<void>;
   endTurn: (channelId: string) => Promise<void>;
   undoTurn: (channelId: string, playerId: string) => Promise<void>;
+  undoLastAction: (channelId: string, playerId: string) => Promise<void>;
   setMyPlayerId: (id: string) => void;
   addPlayer: (player: Player) => void;
   removePlayer: (playerId: string) => void;
@@ -109,7 +111,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
       });
 
       if (!response.ok) {
-        throw new Error('Failed to draw tile');
+        const errorData = await response.json();
+        console.error('❌ Server rejected draw:', errorData);
+        throw new Error(errorData.error || 'Failed to draw tile');
       }
 
       const data = await response.json();
@@ -117,8 +121,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
       set({ myHand: { tiles: [...myHand.tiles, data.tile] } });
       console.log('✅ Tile drawn');
-    } catch (error) {
-      console.error('❌ Failed to draw tile:', error);
+    } catch (error: any) {
+      console.error('❌ Failed to draw tile:', error.message);
+      throw error;
     }
   },
 
@@ -142,6 +147,24 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ myHand: { tiles: myHand.tiles.filter(t => t.id !== tile.id) } });
 
     console.log('✅ Tile placed');
+  },
+
+  // Move tile on board
+  moveTile: async (channelId: string, tileId: string, position: { x: number; y: number }, setId: string) => {
+    console.log('🔄 Moving tile on server...');
+    const response = await fetch(`/api/games/${channelId}/move`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tileId, newPosition: position, newSetId: setId }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('❌ Server rejected tile move:', errorData);
+      throw new Error(errorData.error || 'Failed to move tile');
+    }
+
+    console.log('✅ Tile moved');
   },
 
   // End turn on server
@@ -186,6 +209,36 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
   },
 
+  // Undo last action
+  undoLastAction: async (channelId: string, playerId: string) => {
+    try {
+      console.log('↩️ Undoing last action...');
+      const response = await fetch(`/api/games/${channelId}/undolast`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ playerId }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to undo last action');
+      }
+
+      const data = await response.json();
+      const { myHand } = get();
+
+      // If action returned tile to hand, update local hand
+      if (data.undoneAction && data.undoneAction.fromHand) {
+        const returnedTile = data.undoneAction.tile;
+        set({ myHand: { tiles: [...myHand.tiles, returnedTile] } });
+      }
+
+      console.log('✅ Last action undone');
+    } catch (error: any) {
+      console.error('❌ Failed to undo last action:', error);
+    }
+  },
+
   // Set local player ID
   setMyPlayerId: (id: string) => {
     set({ myPlayerId: id });
@@ -205,8 +258,18 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   // Sync game state from server broadcast
-  syncGameState: (state: Partial<GameState>) => {
+  syncGameState: (state: Partial<GameState> & { poolSize?: number }) => {
     console.log('📥 Syncing state from server:', state);
-    set(state);
+
+    // If poolSize is provided, create a fake pool array with that length
+    if (state.poolSize !== undefined) {
+      const fakePool = Array(state.poolSize).fill({ id: 'pool-tile' });
+      set({
+        ...state,
+        pool: fakePool
+      });
+    } else {
+      set(state);
+    }
   },
 }));

@@ -1,76 +1,64 @@
 import React from 'react';
 import { useDrag } from 'react-dnd';
-import { Tile as TileType, TileColor } from '../types/game';
+import { Tile as TileType } from '../types/game';
 
 interface TileProps {
   tile: TileType;
-  onTileClick?: () => void;
-  className?: string;
-  draggable?: boolean;
+  size?: 'small' | 'medium' | 'large';
+  isDraggable?: boolean;
+  fromBoard?: boolean; // New prop to indicate if tile is on board
 }
 
-const TILE_COLORS: Record<TileColor, string> = {
-  [TileColor.RED]: 'text-rummikub-red',
-  [TileColor.BLUE]: 'text-rummikub-blue',
-  [TileColor.YELLOW]: 'text-rummikub-yellow',
-  [TileColor.BLACK]: 'text-rummikub-black',
-};
-
-export const Tile: React.FC<TileProps> = ({ 
-  tile, 
-  onTileClick, 
-  className = '',
-  draggable = true 
+export const Tile: React.FC<TileProps> = ({
+  tile,
+  size = 'medium',
+  isDraggable = true,
+  fromBoard = false
 }) => {
-  const [{ isDragging }, drag] = useDrag(
-    () => ({
-      type: 'TILE',
-      item: tile,
-      canDrag: draggable,
-      collect: (monitor) => ({
-        isDragging: monitor.isDragging(),
-      }),
+  const [{ isDragging }, drag] = useDrag(() => ({
+    type: 'tile',
+    item: {
+      tile,
+      fromBoard  // Include this in the drag data
+    },
+    canDrag: isDraggable,
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging(),
     }),
-    [tile, draggable]
-  );
+  }), [tile, isDraggable, fromBoard]);
 
-  const colorClass = tile.color ? TILE_COLORS[tile.color] : 'text-purple-600';
+  const sizeClasses = {
+    small: 'w-12 h-16 text-sm',
+    medium: 'w-16 h-20 text-xl',
+    large: 'w-20 h-24 text-2xl',
+  };
+
+  const colorClasses = {
+    red: 'text-red-600',
+    blue: 'text-blue-600',
+    yellow: 'text-yellow-600',
+    black: 'text-black',
+  };
+
+  if (tile.isJoker) {
+    return (
+      <div
+        ref={drag}
+        className={`${sizeClasses[size]} bg-gradient-to-br from-purple-400 to-pink-500 rounded-lg shadow-lg flex items-center justify-center font-bold cursor-move ${isDragging ? 'opacity-50' : 'opacity-100'
+          }`}
+      >
+        <span className="text-white">🃏</span>
+      </div>
+    );
+  }
 
   return (
     <div
-      ref={draggable ? drag : null}
-      onClick={onTileClick}
-      className={`
-        relative w-12 h-16 sm:w-14 sm:h-20 
-        bg-gradient-to-br from-amber-50 to-amber-100
-        border-2 border-amber-900
-        rounded-lg shadow-md
-        flex items-center justify-center
-        font-bold text-2xl sm:text-3xl
-        cursor-pointer
-        transition-all duration-200
-        hover:scale-105 hover:shadow-lg
-        active:scale-95
-        ${isDragging ? 'opacity-50' : 'opacity-100'}
-        ${className}
-      `}
-      style={{
-        touchAction: 'none',
-      }}
+      ref={drag}
+      className={`${sizeClasses[size]} bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg shadow-lg flex items-center justify-center font-bold border-2 border-amber-200 cursor-move ${isDragging ? 'opacity-50' : 'opacity-100'
+        }`}
     >
-      {tile.isJoker ? (
-        <div className="flex flex-col items-center">
-          <span className="text-lg sm:text-xl">🃏</span>
-          <span className="text-xs text-gray-600">Joker</span>
-        </div>
-      ) : (
-        <span className={colorClass}>{tile.number}</span>
-      )}
-      
-      {/* Corner decoration */}
-      <div className="absolute top-1 left-1 text-xs opacity-50">
-        {tile.isJoker ? '★' : tile.number}
-      </div>
+      <span className={colorClasses[tile.color || 'black']}>{tile.number}</span>
     </div>
   );
 };

@@ -7,7 +7,7 @@ export default defineConfig({
     port: 5174,
     host: '0.0.0.0',
     allowedHosts: [
-      'followed-boots-burner-scoop.trycloudflare.com',  // ← New URL
+      'unable-balanced-seas-matter.trycloudflare.com',  // ← New URL
       '.trycloudflare.com',
     ],
     proxy: {

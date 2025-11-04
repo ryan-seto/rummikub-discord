@@ -20,6 +20,7 @@ function App() {
     players,
     currentPlayerIndex,
     board,
+    pool,
     myHand,
     myPlayerId,
     turnTimeRemaining,
@@ -29,8 +30,10 @@ function App() {
     startGame,
     drawTile,
     placeTile,
+    moveTile,
     endTurn,
     undoTurn,
+    undoLastAction,
     addPlayer,
     syncGameState,
   } = useGameStore();
@@ -80,11 +83,11 @@ function App() {
 
   // Fetch player's hand after game is initialized
   useEffect(() => {
-    if (hasInitialized && channelId && myPlayerId && myHand.tiles.length === 0) {
+    if (hasInitialized && channelId && myPlayerId && myHand.tiles.length === 0 && phase === GamePhase.PLAYING) {
       console.log('🎴 Fetching my hand from server');
       fetchMyHand(channelId, myPlayerId);
     }
-  }, [hasInitialized, channelId, myPlayerId, myHand.tiles.length, fetchMyHand]);
+  }, [hasInitialized, channelId, myPlayerId, myHand.tiles.length, phase, fetchMyHand]);
 
   // Listen for new participants joining
   useEffect(() => {
@@ -134,47 +137,6 @@ function App() {
     }
   };
 
-  const handleTileDrop = async (tile: Tile, position: { x: number; y: number }) => {
-    if (!channelId || !myPlayerId) return;
-
-    const SNAP_DISTANCE = 2;
-
-    let snapToSetId: string | null = null;
-    let snappedPosition = { ...position };
-
-    board.forEach(existingTile => {
-      const dx = Math.abs(existingTile.position.x - position.x);
-      const dy = Math.abs(existingTile.position.y - position.y);
-
-      if (dy <= 1 && dx <= SNAP_DISTANCE && dx > 0) {
-        console.log('📎 Snapping to horizontal meld');
-        snapToSetId = existingTile.setId;
-        snappedPosition = {
-          x: position.x > existingTile.position.x
-            ? existingTile.position.x + 1
-            : existingTile.position.x - 1,
-          y: existingTile.position.y
-        };
-      }
-
-      if (dx <= 1 && dy <= SNAP_DISTANCE && dy > 0) {
-        console.log('📎 Snapping to vertical meld');
-        snapToSetId = existingTile.setId;
-        snappedPosition = {
-          x: existingTile.position.x,
-          y: position.y > existingTile.position.y
-            ? existingTile.position.y + 1
-            : existingTile.position.y - 1
-        };
-      }
-    });
-
-    const setId = snapToSetId || `set-${Date.now()}`;
-
-    console.log('🎴 Placing tile with setId:', setId);
-    await placeTile(channelId, myPlayerId, tile, snappedPosition, setId);
-  };
-
   const handleDrawTile = async () => {
     if (!channelId || !myPlayerId) return;
 
@@ -202,6 +164,90 @@ function App() {
 
     console.log('↩️ Undoing turn');
     await undoTurn(channelId, myPlayerId);
+  };
+
+  const handleUndoLastAction = async () => {
+    if (!channelId || !myPlayerId) return;
+
+    console.log('↩️ Undoing last action');
+    await undoLastAction(channelId, myPlayerId);
+  };
+
+  const handleTileDrop = async (
+    tile: Tile,
+    position: { x: number; y: number },
+    fromBoard: boolean = false,
+    tileId?: string
+  ) => {
+    console.log('🎯 handleTileDrop called:', { tile, position, fromBoard, tileId });
+
+    if (!channelId || !myPlayerId) {
+      console.log('❌ Missing channelId or myPlayerId');
+      return;
+    }
+
+    // Edit to chnage snap sensitivity and meld spacing
+    const SNAP_DISTANCE = 1;
+    const ROW_HEIGHT = 1.25;
+    const COL_WIDTH = 1;
+
+    // Snap both X and Y to grid
+    const snappedX = Math.round(position.x / COL_WIDTH) * COL_WIDTH;
+    const snappedY = Math.round(position.y / ROW_HEIGHT) * ROW_HEIGHT;
+    const adjustedPosition = { x: snappedX, y: snappedY };
+
+    let snapToSetId: string | null = null;
+    let snappedPosition = adjustedPosition;
+    let closestDistance = Infinity;
+
+    // Find the CLOSEST tile to snap to (ONLY in the same row)
+    // Exclude the tile being moved if it's from the board
+    board.forEach(existingTile => {
+      if (fromBoard && existingTile.id === tileId) return; // Skip self
+
+      const dx = Math.abs(existingTile.position.x - adjustedPosition.x);
+      const dy = Math.abs(existingTile.position.y - adjustedPosition.y);
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      // ONLY snap if in EXACT same row (dy === 0) and within horizontal distance
+      if (dy === 0 && dx <= SNAP_DISTANCE && dx > 0 && distance < closestDistance) {
+        console.log(`📎 Found nearby tile ${existingTile.number}-${existingTile.color} at distance ${distance}`);
+        closestDistance = distance;
+        snapToSetId = existingTile.setId;
+
+        if (adjustedPosition.x > existingTile.position.x) {
+          // RIGHT
+          snappedPosition = {
+            x: existingTile.position.x + 1,
+            y: existingTile.position.y
+          };
+        } else {
+          // LEFT
+          snappedPosition = {
+            x: existingTile.position.x - 1,
+            y: existingTile.position.y
+          };
+        }
+      }
+    });
+
+    const setId = snapToSetId || `set-${Date.now()}`;
+
+    try {
+      if (fromBoard && tileId) {
+        // Moving existing tile on board
+        console.log('🔄 Moving tile on board with setId:', setId, 'at position:', snappedPosition);
+        await moveTile(channelId, tileId, snappedPosition, setId);
+      } else {
+        // Placing new tile from hand
+        console.log('🎴 Placing tile with setId:', setId, 'at position:', snappedPosition);
+        await placeTile(channelId, myPlayerId, tile, snappedPosition, setId);
+      }
+    } catch (error: any) {
+      console.error('Failed to place/move tile:', error);
+      setTurnError(error.message || 'Cannot place tile there!');
+      setTimeout(() => setTurnError(null), 3000);
+    }
   };
 
   const isMyTurn = myPlayerId && players[currentPlayerIndex]?.id === myPlayerId;
@@ -282,7 +328,8 @@ function App() {
                 onDrawTile={handleDrawTile}
                 onEndTurn={handleEndTurn}
                 onUndo={handleUndoTurn}
-                poolSize={0}
+                onUndoLast={handleUndoLastAction}
+                poolSize={pool.length}
               />
 
               <PlayerList
