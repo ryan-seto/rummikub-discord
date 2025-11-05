@@ -9,11 +9,21 @@ dotenv.config();
 
 const app = express();
 const httpServer = createServer(app);
+
 const io = new Server(httpServer, {
+  path: '/socket.io', // Default Socket.IO path
   cors: {
     origin: "*",
-    methods: ["GET", "POST"]
-  }
+    methods: ["GET", "POST"],
+    credentials: true
+  },
+  transports: ['websocket', 'polling'],
+  allowEIO3: true
+});
+
+// Add connection error logging
+io.engine.on("connection_error", (err) => {
+  console.error("Socket.IO connection error:", err);
 });
 
 const PORT = process.env.PORT || 3001;
@@ -1140,11 +1150,17 @@ app.post('/api/games/:gameId/undolast', (req: Request, res: Response) => {
 // Socket.io connection
 io.on('connection', (socket) => {
   console.log('Client connected:', socket.id);
+  console.log('Transport:', socket.conn.transport.name);
 
   // Join a game room (based on Discord channel ID)
   socket.on('join-room', (channelId: string) => {
     socket.join(channelId);
     console.log(`Socket ${socket.id} joined room ${channelId}`);
+  });
+
+  // Monitor transport upgrades
+  socket.conn.on("upgrade", () => {
+    console.log("Transport upgraded to:", socket.conn.transport.name);
   });
 
   // Legacy broadcast (keeping for compatibility)
@@ -1153,8 +1169,12 @@ io.on('connection', (socket) => {
     socket.to(data.channelId).emit('game-state-update', data.gameState);
   });
 
-  socket.on('disconnect', () => {
-    console.log('Client disconnected:', socket.id);
+  socket.on('disconnect', (reason) => {
+    console.log('Client disconnected:', socket.id, 'Reason:', reason);
+  });
+
+  socket.on('error', (error) => {
+    console.error('Socket error:', error);
   });
 });
 

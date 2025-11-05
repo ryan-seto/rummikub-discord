@@ -20,7 +20,7 @@ export function useDiscordSDK(): UseDiscordSDKReturn {
   const [participants, setParticipants] = useState<DiscordParticipant[]>([]);
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
+  // const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
   const setupStarted = useRef(false);
 
   useEffect(() => {
@@ -57,10 +57,8 @@ export function useDiscordSDK(): UseDiscordSDKReturn {
         console.log('Step 4: Got authorization code');
 
         console.log('Step 5: Exchanging code for token');
-        const backendUrl = `${SERVER_URL}/api/token`;
-        const discordProxyUrl = `https://1432451260484943933.discordsays.com/proxy?url=${encodeURIComponent(backendUrl)}`;
-
-        const response = await fetch(discordProxyUrl, {
+        // Use /api prefix to route through Discord's proxy
+        const response = await fetch('/api/token', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

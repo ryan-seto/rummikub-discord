@@ -7,26 +7,37 @@ export function useSocket(channelId: string | null) {
   useEffect(() => {
     if (!channelId) return;
 
-    // Connect using relative URL for Discord proxy
+    // Connect to Socket.IO through Discord's proxy
+    // The '/socket' maps to your backend via URL Mappings
     socketRef.current = io('/socket', {
-      path: '/socket',
+      path: '/socket/socket.io', // Socket.IO endpoint path
       transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionAttempts: 5,
     });
 
     socketRef.current.on('connect', () => {
       console.log('✅ Connected to server via Socket.io');
+      console.log('Socket ID:', socketRef.current?.id);
       socketRef.current?.emit('join-room', channelId);
     });
 
-    socketRef.current.on('disconnect', () => {
-      console.log('❌ Disconnected from server');
+    socketRef.current.on('disconnect', (reason) => {
+      console.log('❌ Disconnected from server:', reason);
     });
 
     socketRef.current.on('connect_error', (error) => {
-      console.error('❌ Socket connection error:', error);
+      console.error('❌ Socket connection error:', error.message);
+    });
+
+    socketRef.current.on('reconnect', (attemptNumber) => {
+      console.log('🔄 Reconnected after', attemptNumber, 'attempts');
+      socketRef.current?.emit('join-room', channelId);
     });
 
     return () => {
+      console.log('🔌 Disconnecting socket...');
       socketRef.current?.disconnect();
     };
   }, [channelId]);
@@ -43,6 +54,7 @@ export function useSocket(channelId: string | null) {
   };
 
   return {
+    socket: socketRef.current,
     onGameStateUpdate,
   };
 }
