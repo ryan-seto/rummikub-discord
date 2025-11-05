@@ -20,7 +20,7 @@ const PORT = process.env.PORT || 3001;
 // Middleware
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://your-vercel-app.vercel.app'] // We'll update this after Vercel deployment
+    ? ['https://rummikub-discord-rgkwphty2-ryan-setos-projects.vercel.app/'] // We'll update this after Vercel deployment
     : '*',
   credentials: true
 }));
