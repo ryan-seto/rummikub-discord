@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response, NextFunction } from "express";
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { createServer } from 'http';
@@ -27,12 +27,12 @@ app.use(cors({
 app.use(express.json());
 
 // Health check endpoint
-app.get( '/api/health', (req, res) => {
+app.get( '/api/health', (req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // OAuth token exchange endpoint
-app.post( '/api/token', async (req, res) => {
+app.post( '/api/token', async (req: Request, res: Response) => {
   try {
     const { code } = req.body;
 
@@ -205,7 +205,7 @@ function validateInitialMeld(board: any[], playerId: string, game: any): { valid
 }
 
 // Initialize a new game
-app.post( '/api/games/init', (req, res) => {
+app.post( '/api/games/init', (req: Request, res: Response) => {
   const { channelId, players } = req.body;
 
   if (!channelId || !players || players.length < 2) {
@@ -260,7 +260,7 @@ app.post( '/api/games/init', (req, res) => {
 });
 
 // Get player's private hand
-app.get( '/api/games/:gameId/hand/:playerId', (req, res) => {
+app.get( '/api/games/:gameId/hand/:playerId', (req: Request, res: Response) => {
   const { gameId, playerId } = req.params;
   const game = games.get(gameId);
 
@@ -273,7 +273,7 @@ app.get( '/api/games/:gameId/hand/:playerId', (req, res) => {
 });
 
 // Get public game state (no hands)
-app.get( '/api/games/:gameId/state', (req, res) => {
+app.get( '/api/games/:gameId/state', (req: Request, res: Response) => {
   const { gameId } = req.params;
   const game = games.get(gameId);
 
@@ -301,7 +301,7 @@ app.get( '/api/games/:gameId/state', (req, res) => {
 });
 
 // Start game
-app.post( '/api/games/:gameId/start', (req, res) => {
+app.post( '/api/games/:gameId/start', (req: Request, res: Response) => {
   const { gameId } = req.params;
   const game = games.get(gameId);
 
@@ -336,7 +336,7 @@ app.post( '/api/games/:gameId/start', (req, res) => {
 });
 
 // Place tile
-app.post( '/api/games/:gameId/place', (req, res) => {
+app.post( '/api/games/:gameId/place', (req: Request, res: Response) => {
   const { gameId } = req.params;
   const { playerId, tile, position, setId } = req.body;
   const game = games.get(gameId);
@@ -480,7 +480,7 @@ app.post( '/api/games/:gameId/place', (req, res) => {
 });
 
 // Move tile on board (for rearranging)
-app.post( '/api/games/:gameId/move', (req, res) => {
+app.post( '/api/games/:gameId/move', (req: Request, res: Response) => {
   const { gameId } = req.params;
   const { tileId, newPosition, newSetId, playerId } = req.body;
   const game = games.get(gameId);
@@ -705,7 +705,7 @@ function canBecomeValidGroup(tiles: any[], jokerCount: number = 0): boolean {
 }
 
 // Draw tile
-app.post( '/api/games/:gameId/draw', (req, res) => {
+app.post( '/api/games/:gameId/draw', (req: Request, res: Response) => {
   const { gameId } = req.params;
   const { playerId } = req.body;
   const game = games.get(gameId);
@@ -863,7 +863,7 @@ function checkWinCondition(game: ServerGameState, playerId: string) {
 }
 
 // End turn
-app.post( '/api/games/:gameId/endturn', (req, res) => {
+app.post( '/api/games/:gameId/endturn', (req: Request, res: Response) => {
   const { gameId } = req.params;
   const { playerId } = req.body;
   const game = games.get(gameId);
@@ -973,7 +973,7 @@ app.post( '/api/games/:gameId/endturn', (req, res) => {
 });
 
 // Undo turn
-app.post( '/api/games/:gameId/undo', (req, res) => {
+app.post( '/api/games/:gameId/undo', (req: Request, res: Response) => {
   const { gameId } = req.params;
   const { playerId } = req.body;
   const game = games.get(gameId);
@@ -1018,7 +1018,7 @@ app.post( '/api/games/:gameId/undo', (req, res) => {
 });
 
 // Undo last action
-app.post( '/api/games/:gameId/undolast', (req, res) => {
+app.post( '/api/games/:gameId/undolast', (req: Request, res: Response) => {
   const { gameId } = req.params;
   const { playerId } = req.body;
   const game = games.get(gameId);
