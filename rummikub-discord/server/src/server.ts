@@ -1164,21 +1164,3 @@ httpServer.listen(PORT, () => {
 });
 
 export default app;
-
-const backendUrl = 'https://rummy-server-4m92.onrender.com/auth/discord';
-const discordProxyUrl = `https://1432451260484943933.discordsays.com/proxy?url=${encodeURIComponent(backendUrl)}`;
-
-fetch(discordProxyUrl, {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({ code: 'your-auth-code' }),
-})
-  .then((response) => response.json())
-  .then((data) => {
-    console.log('Response from backend:', data);
-  })
-  .catch((error) => {
-    console.error('Error calling backend through Discord proxy:', error);
-  });

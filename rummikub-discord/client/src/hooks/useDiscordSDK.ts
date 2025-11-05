@@ -25,14 +25,14 @@ export function useDiscordSDK(): UseDiscordSDKReturn {
 
   useEffect(() => {
     // Prevent double initialization in React Strict Mode
-    if (setupStarted.current) return;  // ADD THIS CHECK
-    setupStarted.current = true;        // ADD THIS LINE
+    if (setupStarted.current) return;
+    setupStarted.current = true;
 
     async function setupDiscord() {
       try {
         console.log('Step 1: Getting client ID from env');
         const clientId = import.meta.env.VITE_DISCORD_CLIENT_ID;
-        
+
         if (!clientId) {
           throw new Error('VITE_DISCORD_CLIENT_ID is not set');
         }
@@ -52,16 +52,15 @@ export function useDiscordSDK(): UseDiscordSDKReturn {
           response_type: 'code',
           state: '',
           prompt: 'none',
-          scope: [
-            'identify',
-            'guilds',
-            'guilds.members.read',
-          ],
+          scope: ['identify', 'guilds', 'guilds.members.read'],
         });
         console.log('Step 4: Got authorization code');
 
         console.log('Step 5: Exchanging code for token');
-        const response = await fetch(`/api/token`, {
+        const backendUrl = `${SERVER_URL}/api/token`;
+        const discordProxyUrl = `https://1432451260484943933.discordsays.com/proxy?url=${encodeURIComponent(backendUrl)}`;
+
+        const response = await fetch(discordProxyUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -91,7 +90,7 @@ export function useDiscordSDK(): UseDiscordSDKReturn {
         console.log('Step 6: Authentication successful!');
 
         setAuth(authResult);
-        
+
         if (authResult.user) {
           setUser(authResult.user as DiscordUser);
           console.log('Got user:', authResult.user);
