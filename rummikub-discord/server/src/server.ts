@@ -18,6 +18,13 @@ const io = new Server(httpServer, {
 
 const PORT = process.env.PORT || 3001;
 
+// Log environment variables on startup
+console.log('Environment Variables:');
+console.log('PORT:', process.env.PORT);
+console.log('NODE_ENV:', process.env.NODE_ENV);
+console.log('VITE_DISCORD_CLIENT_ID:', process.env.VITE_DISCORD_CLIENT_ID ? 'Set' : 'Not Set');
+console.log('DISCORD_CLIENT_SECRET:', process.env.DISCORD_CLIENT_SECRET ? 'Set' : 'Not Set');
+
 // MIDDLEWARE
 const allowedOrigins = process.env.NODE_ENV === 'production'
   ? [
@@ -522,8 +529,6 @@ app.post( '/api/games/:gameId/move', (req: Request, res: Response) => {
   }
 
   console.log(`🔄 Moving tile ${tileId} to position:`, newPosition);
-
-  // ... rest of move logic
 
   // Find the tile on the board
   const tileIndex = game.board.findIndex(t => t.id === tileId);
