@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useDiscordSDK } from './hooks/useDiscordSDK';
@@ -12,6 +13,8 @@ import { GamePhase, Player, Tile } from './types/game';
 import { useSocket } from './hooks/useSocket';
 import { TURN_TIME_SECONDS } from './constants';
 import { WinnerScreen } from './components/WinnerScreen';
+import DiscordLogin from './components/DiscordLogin'; // Import the login component
+import OAuthCallback from './components/OAuthCallback'; // Import the callback component
 
 function App() {
   const { user, participants, isReady, error, channelId } = useDiscordSDK();
@@ -405,77 +408,75 @@ function App() {
 
   // Playing phase
   return (
-    <DndProvider backend={HTML5Backend}>
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-slate-800 p-4">
-        <div className="max-w-7xl mx-auto">
-          {/* Header */}
-          <div className="bg-gray-800 rounded-lg p-4 mb-4 shadow-lg">
-            <div className="flex items-center justify-between">
-              <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">
-                Rummy
-              </h1>
+    <Router>
+      <Routes>
+        {/* Route for the Discord login page */}
+        <Route path="/" element={<DiscordLogin />} />
 
-              {/* Turn indicator */}
-              {isMyTurn ? (
-                <div className="flex items-center gap-2 bg-green-600 px-4 py-2 rounded-lg animate-pulse">
-                  <div className="w-3 h-3 bg-yellow-400 rounded-full" />  {/* ← Removed animate-pulse */}
-                  <span className="text-white font-bold text-lg">Your Turn!</span>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2 bg-gray-700 px-4 py-2 rounded-lg">
-                  <span className="text-gray-400 font-semibold">{players[currentPlayerIndex]?.username}'s turn</span>
-                </div>
-              )}
-            </div>
+        {/* Route for the OAuth2 callback */}
+        <Route path="/oauth2/callback" element={<OAuthCallback />} />
 
-            {turnError && (
-              <div className="mt-3 bg-red-600 text-white px-4 py-3 rounded-lg font-semibold animate-pulse">
-                ❌ {turnError}
+        {/* Other routes for the game */}
+        <Route
+          path="/game"
+          element={
+            <DndProvider backend={HTML5Backend}>
+              <div className="min-h-screen bg-gradient-to-br from-gray-900 to-slate-800 p-4">
+                <div className="max-w-7xl mx-auto">
+                  {/* Header */}
+                  <div className="bg-gray-800 rounded-lg p-4 mb-4 shadow-lg">
+                    <div className="flex items-center justify-between">
+                      <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">
+                        Rummy
+                      </h1>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-4">
+                    {/* Game Board */}
+                    <div className="lg:col-span-3 min-h-[600px]">
+                      <GameBoard
+                        tiles={board}
+                        onTileDrop={handleTileDrop}
+                      />
+                    </div>
+
+                    {/* Sidebar */}
+                    <div className="space-y-4">
+                      <GameControls
+                        isMyTurn={!!isMyTurn}
+                        canEndTurn={canEndTurn}
+                        canDraw={canDraw}
+                        timeRemaining={turnTimeRemaining}
+                        onDrawTile={handleDrawTile}
+                        onEndTurn={handleEndTurn}
+                        onUndo={handleUndoTurn}
+                        onUndoLast={handleUndoLastAction}
+                        poolSize={pool.length}
+                        players={players}
+                        currentPlayerIndex={currentPlayerIndex}
+                        myPlayerId={myPlayerId}
+                      />
+
+                      <PlayerList
+                        players={players}
+                        currentPlayerIndex={currentPlayerIndex}
+                        myPlayerId={myPlayerId}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Player Hand */}
+                  <PlayerHand
+                    tiles={myHand.tiles}
+                  />
+                </div>
               </div>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-4">
-            {/* Game Board */}
-            <div className="lg:col-span-3 min-h-[600px]">
-              <GameBoard
-                tiles={board}
-                onTileDrop={handleTileDrop}
-              />
-            </div>
-
-            {/* Sidebar */}
-            <div className="space-y-4">
-              <GameControls
-                isMyTurn={!!isMyTurn}
-                canEndTurn={canEndTurn}
-                canDraw={canDraw}
-                timeRemaining={turnTimeRemaining}
-                onDrawTile={handleDrawTile}
-                onEndTurn={handleEndTurn}
-                onUndo={handleUndoTurn}
-                onUndoLast={handleUndoLastAction}
-                poolSize={pool.length}
-                players={players}
-                currentPlayerIndex={currentPlayerIndex}
-                myPlayerId={myPlayerId}
-              />
-
-              <PlayerList
-                players={players}
-                currentPlayerIndex={currentPlayerIndex}
-                myPlayerId={myPlayerId}
-              />
-            </div>
-          </div>
-
-          {/* Player Hand */}
-          <PlayerHand
-            tiles={myHand.tiles}
-          />
-        </div>
-      </div>
-    </DndProvider>
+            </DndProvider>
+          }
+        />
+      </Routes>
+    </Router>
   );
 }
 
