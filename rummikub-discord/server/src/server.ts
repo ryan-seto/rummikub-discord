@@ -1130,7 +1130,7 @@ io.on('connection', (socket) => {
 
 // Start server
 httpServer.listen(PORT, () => {
-  console.log(`🚀 Rummikub server running on port ${PORT}`);
+  console.log(`🚀 Server starting on port: ${PORT}`);
   console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
 });
 
