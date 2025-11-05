@@ -97,18 +97,17 @@ interface TurnAction {
 
 const games = new Map<string, ServerGameState>();
 
-// Helper functions
 function createTilePool() {
   const tiles = [];
   const colors = ['red', 'blue', 'yellow', 'black'];
   let id = 0;
 
-  // Create 2 sets of 1-13 in each color
+  // TESTING: Create only 1-5 instead of 1-13
   for (let set = 0; set < 2; set++) {
     for (const color of colors) {
       for (let num = 1; num <= 13; num++) {
         tiles.push({
-          id: `tile-${id++}`,
+          id: `tile-${id++}`,  // ← This increments for each tile
           number: num,
           color,
           isJoker: false,
@@ -210,11 +209,17 @@ app.post('/api/games/init', (req, res) => {
 
   const gameId = channelId;
 
+  // Check if game already exists - just return success
+  if (games.has(gameId)) {
+    console.log(`🎮 Game ${gameId} already exists, skipping initialization`);
+    return res.json({ success: true, gameId, alreadyExists: true });
+  }
+
   // Create and shuffle tiles
   const allTiles = createTilePool();
   const shuffled = shuffleTiles(allTiles);
 
-  // Deal 14 tiles to each player
+  // Deal 7 tiles to each player
   const playerHands: { [playerId: string]: any[] } = {};
   let tileIndex = 0;
 
@@ -335,6 +340,13 @@ app.post('/api/games/:gameId/place', (req, res) => {
     return res.status(404).json({ error: 'Game not found' });
   }
 
+  // Check if it's this player's turn
+  const currentPlayer = game.players[game.currentPlayerIndex];
+  if (playerId && currentPlayer.id !== playerId) {
+    console.log(`❌ Not player ${playerId}'s turn (current: ${currentPlayer.id})`);
+    return res.status(403).json({ error: 'Not your turn' });
+  }
+
   console.log(`🎴 Attempting to place tile ${tile.number}-${tile.color} at position:`, position);
 
   // Check if position is already occupied
@@ -412,6 +424,35 @@ app.post('/api/games/:gameId/place', (req, res) => {
 
   console.log(`✅ Tile ${tile.number}-${tile.color} placed at (${position.x}, ${position.y})`);
 
+  // Check for win condition after placing
+  if (checkWinCondition(game, playerId)) {
+    console.log(`🎉 Player wins by placing last tile!`);
+    game.phase = 'ended';
+
+    const winner = game.players.find((p: any) => p.id === playerId);
+
+    // Delay the win broadcast by 1.5 seconds so player can see their tile placement
+    setTimeout(() => {
+      io.to(gameId).emit('game-state-update', {
+        phase: 'ended',
+        winner: winner,
+        players: game.players.map((p: any) => ({
+          id: p.id,
+          username: p.username,
+          avatar: p.avatar,
+          tilesCount: game.playerHands[p.id]?.length || 0,
+          hasPlayedInitial: p.hasPlayedInitial,
+          isReady: p.isReady,
+        })),
+        currentPlayerIndex: game.currentPlayerIndex,
+        board: game.board,
+        poolSize: game.pool.length,
+      });
+    }, 1000); // 1 second delay
+
+    return res.json({ success: true, winner: winner });
+  }
+
   // Broadcast updated board
   io.to(gameId).emit('game-state-update', {
     phase: game.phase,
@@ -436,7 +477,7 @@ app.post('/api/games/:gameId/place', (req, res) => {
 // Move tile on board (for rearranging)
 app.post('/api/games/:gameId/move', (req, res) => {
   const { gameId } = req.params;
-  const { tileId, newPosition, newSetId, playerId } = req.body;  // ← Add playerId
+  const { tileId, newPosition, newSetId, playerId } = req.body;
   const game = games.get(gameId);
 
   if (!game) {
@@ -450,7 +491,15 @@ app.post('/api/games/:gameId/move', (req, res) => {
     return res.status(403).json({ error: 'Not your turn' });
   }
 
+  // Check if player has completed initial meld
+  if (!currentPlayer.hasPlayedInitial) {
+    console.log(`❌ Player ${currentPlayer.username} hasn't completed initial meld - cannot manipulate board`);
+    return res.status(403).json({ error: 'You must complete your initial 30-point meld before manipulating the board' });
+  }
+
   console.log(`🔄 Moving tile ${tileId} to position:`, newPosition);
+
+  // ... rest of move logic
 
   // Find the tile on the board
   const tileIndex = game.board.findIndex(t => t.id === tileId);
@@ -656,8 +705,14 @@ app.post('/api/games/:gameId/draw', (req, res) => {
   const { playerId } = req.body;
   const game = games.get(gameId);
 
-  if (!game || game.pool.length === 0) {
-    return res.status(404).json({ error: 'Cannot draw tile' });
+  if (!game) {
+    return res.status(404).json({ error: 'Game not found' });
+  }
+
+  // Check if pool is empty
+  if (game.pool.length === 0) {
+    console.log('❌ Pool is empty, cannot draw');
+    return res.status(400).json({ error: 'No tiles left in pool' });
   }
 
   // Check if any actions taken this turn (can't draw after placing/moving)
@@ -665,21 +720,35 @@ app.post('/api/games/:gameId/draw', (req, res) => {
     return res.status(400).json({ error: 'Cannot draw after placing or moving tiles' });
   }
 
+  // VALIDATE BOARD STATE BEFORE DRAWING (same as end turn validation)
+  if (game.board.length > 0) {
+    const allTilesInValidMelds = game.board.every(tile => {
+      const tilesInSameSet = game.board.filter(t => t.setId === tile.setId);
+      return tilesInSameSet.length >= 3 && (isValidRun(tilesInSameSet) || isValidGroup(tilesInSameSet));
+    });
+
+    if (!allTilesInValidMelds) {
+      console.log('❌ Cannot draw - board must have all valid melds');
+      return res.status(400).json({ error: 'Board has incomplete melds. Fix them or undo your turn before drawing.' });
+    }
+  }
+
+  // All validation passed - proceed with draw
   const drawnTile = game.pool.shift();
   game.playerHands[playerId].push(drawnTile);
 
   // Drawing a tile automatically ends the turn
   game.turnStartBoard = [...game.board];
   game.currentPlayerIndex = (game.currentPlayerIndex + 1) % game.players.length;
-  game.actionHistory = []; // Clear for next turn
-  game.hasDrawnThisTurn = false; // Reset for next player
+  game.actionHistory = [];
+  game.hasDrawnThisTurn = false;
 
   games.set(gameId, game);
 
   console.log(`🎴 Player ${playerId} drew a tile`);
   console.log(`🔄 Turn automatically ended, now player ${game.currentPlayerIndex}'s turn`);
 
-  // Broadcast turn change after draw
+  // Broadcast turn change
   io.to(gameId).emit('game-state-update', {
     phase: game.phase,
     players: game.players.map((p: any) => ({
@@ -774,7 +843,21 @@ function isValidGroup(tiles: any[]) {
   return true;
 }
 
-// End turn - NOW WITH INITIAL MELD VALIDATION
+// Helper function to check win condition
+function checkWinCondition(game: ServerGameState, playerId: string) {
+  const hand = game.playerHands[playerId];
+  if (hand && hand.length === 0) {
+    // Validate board is legal
+    const meldGroups = groupTilesIntoMelds(game.board);
+    const completeMelds = meldGroups.filter(meld => meld.length >= 3);
+    const allValid = completeMelds.every(meld => isValidRun(meld) || isValidGroup(meld));
+
+    return allValid;
+  }
+  return false;
+}
+
+// End turn
 app.post('/api/games/:gameId/endturn', (req, res) => {
   const { gameId } = req.params;
   const { playerId } = req.body;
@@ -786,40 +869,73 @@ app.post('/api/games/:gameId/endturn', (req, res) => {
 
   const currentPlayer = game.players[game.currentPlayerIndex];
 
-  // Verify it's actually this player's turn
   if (playerId && currentPlayer.id !== playerId) {
     return res.status(403).json({ error: 'Not your turn' });
   }
 
-  // Validate board before ending turn (only if no draw happened)
-  if (!game.hasDrawnThisTurn) {
-    const meldGroups = groupTilesIntoMelds(game.board);
-    const completeMelds = meldGroups.filter(meld => meld.length >= 3);
+  // ALWAYS validate board state, even if just drawing
+  const meldGroups = groupTilesIntoMelds(game.board);
+  const completeMelds = meldGroups.filter(meld => meld.length >= 3);
 
-    // Check all complete melds are valid
-    const allValid = completeMelds.every(meld => isValidRun(meld) || isValidGroup(meld));
+  // Check all complete melds are valid
+  const allValid = completeMelds.every(meld => isValidRun(meld) || isValidGroup(meld));
 
-    if (!allValid) {
-      console.log('❌ Invalid board configuration');
-      return res.status(400).json({ error: 'Invalid board configuration' });
+  if (!allValid) {
+    console.log('❌ Invalid board configuration');
+    return res.status(400).json({ error: 'Invalid board configuration - fix melds before ending turn' });
+  }
+
+  // Check for incomplete melds (tiles that aren't in valid 3+ tile melds)
+  const allTilesInValidMelds = game.board.every(tile => {
+    const tilesInSameSet = game.board.filter(t => t.setId === tile.setId);
+    return tilesInSameSet.length >= 3 && (isValidRun(tilesInSameSet) || isValidGroup(tilesInSameSet));
+  });
+
+  if (!allValid || !allTilesInValidMelds) {
+    console.log('❌ Board has incomplete or invalid melds');
+    return res.status(400).json({ error: 'All tiles must be in valid melds of 3+ tiles' });
+  }
+
+  // Check initial meld requirement (only if player hasn't completed it yet)
+  if (!currentPlayer.hasPlayedInitial && game.actionHistory.length > 0) {
+    const initialMeldCheck = validateInitialMeld(game.board, currentPlayer.id, game);
+
+    if (!initialMeldCheck.valid) {
+      console.log(`❌ Initial meld check failed: ${initialMeldCheck.message}`);
+      return res.status(400).json({
+        error: initialMeldCheck.message,
+        totalValue: initialMeldCheck.totalValue
+      });
     }
 
-    // Check initial meld requirement (only if player hasn't completed it yet)
-    if (!currentPlayer.hasPlayedInitial) {
-      const initialMeldCheck = validateInitialMeld(game.board, currentPlayer.id, game);
+    // Mark player as having completed initial meld
+    currentPlayer.hasPlayedInitial = true;
+    console.log(`✅ Player ${currentPlayer.username} completed initial meld (${initialMeldCheck.totalValue} points)`);
+  }
 
-      if (!initialMeldCheck.valid) {
-        console.log(`❌ Initial meld check failed: ${initialMeldCheck.message}`);
-        return res.status(400).json({
-          error: initialMeldCheck.message,
-          totalValue: initialMeldCheck.totalValue
-        });
-      }
+  // Check for win condition - player has no tiles left
+  if (game.playerHands[currentPlayer.id]?.length === 0) {
+    console.log(`🎉 Player ${currentPlayer.username} wins! No tiles remaining.`);
+    game.phase = 'ended';
 
-      // Mark player as having completed initial meld
-      currentPlayer.hasPlayedInitial = true;
-      console.log(`✅ Player ${currentPlayer.username} completed initial meld (${initialMeldCheck.totalValue} points)`);
-    }
+    // Broadcast game end
+    io.to(gameId).emit('game-state-update', {
+      phase: game.phase,
+      winner: currentPlayer,
+      players: game.players.map((p: any) => ({
+        id: p.id,
+        username: p.username,
+        avatar: p.avatar,
+        tilesCount: game.playerHands[p.id]?.length || 0,
+        hasPlayedInitial: p.hasPlayedInitial,
+        isReady: p.isReady,
+      })),
+      currentPlayerIndex: game.currentPlayerIndex,
+      board: game.board,
+      poolSize: game.pool.length,
+    });
+
+    return res.json({ success: true, winner: currentPlayer });
   }
 
   game.turnStartBoard = [...game.board];
@@ -844,7 +960,7 @@ app.post('/api/games/:gameId/endturn', (req, res) => {
     currentPlayerIndex: game.currentPlayerIndex,
     board: game.board,
     poolSize: game.pool.length,
-    canDraw: true,
+    canDraw: game.pool.length > 0,
     canEndTurn: false,
   });
 

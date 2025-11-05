@@ -80,17 +80,17 @@ export const GameControls: React.FC<GameControlsProps> = ({
       <div className="space-y-2">
         <button
           onClick={onDrawTile}
-          disabled={!isMyTurn || !canDraw || poolSize === 0}
+          disabled={!isMyTurn || !canDraw || poolSize === 0}  // ← poolSize === 0 check
           className={`
             w-full py-3 px-4 rounded-lg font-semibold
             transition-all duration-200
             ${isMyTurn && canDraw && poolSize > 0
-              ? 'bg-blue-600 hover:bg-blue-700 text-white cursor-pointer transform hover:scale-105'
-              : 'bg-gray-600 text-gray-400 cursor-not-allowed'
-            }
+                      ? 'bg-blue-600 hover:bg-blue-700 text-white cursor-pointer transform hover:scale-105'
+                      : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                    }
           `}
         >
-          🎴 Draw Tile
+          {poolSize === 0 ? '🎴 No Tiles Left' : '🎴 Draw Tile'}  {/* ← Show different text */}
         </button>
 
         <button

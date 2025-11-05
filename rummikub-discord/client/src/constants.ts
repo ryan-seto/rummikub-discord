@@ -1,0 +1,1 @@
+export const TURN_TIME_SECONDS = 60;

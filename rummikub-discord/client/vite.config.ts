@@ -7,7 +7,7 @@ export default defineConfig({
     port: 5174,
     host: '0.0.0.0',
     allowedHosts: [
-      'unable-balanced-seas-matter.trycloudflare.com',  // ← New URL
+      'majority-requirements-zoloft-provide.trycloudflare.com',  // ← New URL
       '.trycloudflare.com',
     ],
     proxy: {

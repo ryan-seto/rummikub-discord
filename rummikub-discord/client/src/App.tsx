@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useDiscordSDK } from './hooks/useDiscordSDK';
@@ -10,10 +10,13 @@ import { PlayerList } from './components/PlayerList';
 import { GameControls } from './components/GameControls';
 import { GamePhase, Player, Tile } from './types/game';
 import { useSocket } from './hooks/useSocket';
+import { TURN_TIME_SECONDS } from './constants';
+import { WinnerScreen } from './components/WinnerScreen';
 
 function App() {
   const { user, participants, isReady, error, channelId } = useDiscordSDK();
   const { onGameStateUpdate } = useSocket(channelId);
+  const [winner, setWinner] = useState<Player | null>(null);
 
   const {
     phase,
@@ -73,9 +76,9 @@ function App() {
 
       gamePlayers.forEach(player => addPlayer(player));
 
-      // Only first player initializes the game
-      if (gamePlayers.length >= 2 && gamePlayers[0].id === user.id) {
-        console.log('👑 First player - initializing game on server');
+      // ALL players try to initialize (server will handle if already exists)
+      if (gamePlayers.length >= 2) {
+        console.log('🎮 Initializing/joining game on server');
         initializeGame(channelId, gamePlayers);
       }
 
@@ -117,6 +120,11 @@ function App() {
       console.log('📥 Received server update:', gameState);
       isSyncing.current = true;
 
+      // Check for winner
+      if (gameState.phase === 'ended' && gameState.winner) {
+        setWinner(gameState.winner);
+      }
+
       syncGameState(gameState);
 
       setTimeout(() => {
@@ -126,6 +134,58 @@ function App() {
 
     return cleanup;
   }, [onGameStateUpdate, syncGameState]);
+
+  const isMyTurn = myPlayerId && players[currentPlayerIndex]?.id === myPlayerId;
+
+  // Handle timer expiration
+  const handleTimeExpired = useCallback(async () => {
+    if (!channelId || !myPlayerId) return;
+
+    console.log('⏰ Time expired - undoing turn and ending');
+
+    // Undo the turn first (return tiles to hand)
+    await undoTurn(channelId, myPlayerId);
+
+    // Then automatically draw a tile (which auto-ends turn)
+    try {
+      await drawTile(channelId, myPlayerId);
+    } catch (error) {
+      console.error('Failed to auto-draw on timeout:', error);
+      // If can't draw (pool empty), just end turn
+      try {
+        await endTurn(channelId, myPlayerId);
+      } catch (e) {
+        console.error('Failed to end turn:', e);
+      }
+    }
+  }, [channelId, myPlayerId, undoTurn, drawTile, endTurn]);
+  
+  // Turn timer countdown
+  useEffect(() => {
+    if (phase !== GamePhase.PLAYING || !isMyTurn) return;
+
+    // Reset timer when it becomes your turn
+    useGameStore.setState({ turnTimeRemaining: TURN_TIME_SECONDS });
+
+    const timer = setInterval(() => {
+      const newTime = Math.max(0, useGameStore.getState().turnTimeRemaining - 1);
+
+      useGameStore.setState({
+        turnTimeRemaining: newTime
+      });
+
+      // Auto-end turn when timer reaches 0
+      if (newTime === 0) {
+        console.log('⏰ Timer expired! Auto-ending turn...');
+        handleTimeExpired();
+      }
+    }, 1000);
+
+    return () => {
+      console.log('⏰ Cleaning up timer');
+      clearInterval(timer);
+    };
+  }, [phase, isMyTurn, currentPlayerIndex, handleTimeExpired]); // ← Add handleTimeExpired
 
   const handleStartGame = async () => {
     if (!channelId) return;
@@ -142,8 +202,17 @@ function App() {
   const handleDrawTile = async () => {
     if (!channelId || !myPlayerId) return;
 
-    console.log('🎴 Drawing tile');
-    await drawTile(channelId, myPlayerId);
+    try {
+      console.log('🎴 Drawing tile');
+      await drawTile(channelId, myPlayerId);
+    } catch (error: any) {
+      console.error('❌ Draw failed:', error);
+      // Show error if pool is empty
+      if (error.message.includes('pool')) {
+        setTurnError('No tiles left to draw!');
+        setTimeout(() => setTurnError(null), 3000);
+      }
+    }
   };
 
   const handleEndTurn = async () => {
@@ -263,8 +332,6 @@ function App() {
     }
   };
 
-  const isMyTurn = myPlayerId && players[currentPlayerIndex]?.id === myPlayerId;
-
   // Loading state
   if (!isReady) {
     return (
@@ -300,6 +367,11 @@ function App() {
         onStartGame={handleStartGame}
       />
     );
+  }
+
+  // Winner screen (add this before the final closing brace)
+  if (phase === GamePhase.ENDED && winner) {
+    return <WinnerScreen winner={winner} />;
   }
 
   // Playing phase

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { GameState, GamePhase, Player, Tile, TileOnBoard, PlayerHand } from '../types/game';
+import { TURN_TIME_SECONDS } from '../constants';
 
 interface GameStore extends GameState {
   // Local player state
@@ -33,7 +34,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   board: [],
   pool: [],
   turnStartBoard: [],
-  turnTimeRemaining: 120,
+  turnTimeRemaining: TURN_TIME_SECONDS,
   myPlayerId: null,
   myHand: { tiles: [] },
   canDraw: true,
@@ -69,6 +70,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
   // Fetch player's hand from server
   fetchMyHand: async (channelId: string, playerId: string) => {
     try {
+      const { myHand } = get();
+
+      // Don't fetch if we already have tiles
+      if (myHand.tiles.length > 0) {
+        console.log('✅ Hand already fetched, skipping');
+        return;
+      }
+
       console.log('🎴 Fetching hand from server...');
       const response = await fetch(`/api/games/${channelId}/hand/${playerId}`);
 
@@ -137,7 +146,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const response = await fetch(`/api/games/${channelId}/place`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ playerId, tile, position, setId }),
+      body: JSON.stringify({ playerId, tile, position, setId }),  // ← playerId is already here, good!
     });
 
     if (!response.ok) {
@@ -211,8 +220,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
       const data = await response.json();
       const { myHand } = get();
 
-      // Add restored tiles back to hand
-      set({ myHand: { tiles: [...myHand.tiles, ...data.restoredTiles] } });
+      // Remove duplicates by ID before adding restored tiles
+      const existingIds = new Set(myHand.tiles.map(t => t.id));
+      const uniqueRestoredTiles = data.restoredTiles.filter((t: any) => !existingIds.has(t.id));
+
+      set({ myHand: { tiles: [...myHand.tiles, ...uniqueRestoredTiles] } });
 
       console.log('✅ Turn undone');
     } catch (error) {
@@ -238,10 +250,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
       const data = await response.json();
       const { myHand } = get();
 
-      // If action returned tile to hand, update local hand
+      // If action returned tile to hand, check for duplicates
       if (data.undoneAction && data.undoneAction.fromHand) {
         const returnedTile = data.undoneAction.tile;
-        set({ myHand: { tiles: [...myHand.tiles, returnedTile] } });
+
+        // Only add if not already in hand
+        const alreadyInHand = myHand.tiles.some(t => t.id === returnedTile.id);
+        if (!alreadyInHand) {
+          set({ myHand: { tiles: [...myHand.tiles, returnedTile] } });
+        }
       }
 
       console.log('✅ Last action undone');
