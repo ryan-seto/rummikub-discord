@@ -17,13 +17,27 @@ const io = new Server(httpServer, {
 
 const PORT = process.env.PORT || 3001;
 
-// Middleware
+// MIDDLEWARE
+const allowedOrigins = process.env.NODE_ENV === 'production'
+  ? [
+      'https://rummikub-discord-rgkwphty2-ryan-setos-projects.vercel.app',
+      'https://discord.com',
+      'https://ptb.discord.com',
+      'https://canary.discord.com'
+    ]
+  : '*';
+
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['https://rummikub-discord-rgkwphty2-ryan-setos-projects.vercel.app/'] // We'll update this after Vercel deployment
-    : '*',
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
 }));
+
 app.use(express.json());
 
 // Health check endpoint
