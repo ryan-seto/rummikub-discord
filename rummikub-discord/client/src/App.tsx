@@ -14,7 +14,7 @@ import { useSocket } from './hooks/useSocket';
 import { TURN_TIME_SECONDS } from './constants';
 import { WinnerScreen } from './components/WinnerScreen';
 import DiscordLogin from './components/DiscordLogin'; // Import the login component
-import OAuthCallback from './components/OAuthCallback'; // Import the callback component
+import OAuthCallback from './pages/OAuthCallback'; // Import the callback component
 
 function App() {
   const { user, participants, isReady, error, channelId } = useDiscordSDK();
