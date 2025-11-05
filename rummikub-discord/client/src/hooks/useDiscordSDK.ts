@@ -20,8 +20,8 @@ export function useDiscordSDK(): UseDiscordSDKReturn {
   const [participants, setParticipants] = useState<DiscordParticipant[]>([]);
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
-  const setupStarted = useRef(false);  // ADD THIS LINE
+  const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
+  const setupStarted = useRef(false);
 
   useEffect(() => {
     // Prevent double initialization in React Strict Mode
@@ -61,7 +61,7 @@ export function useDiscordSDK(): UseDiscordSDKReturn {
         console.log('Step 4: Got authorization code');
 
         console.log('Step 5: Exchanging code for token');
-        const response = await fetch('/api/token', {
+        const response = await fetch(`${SERVER_URL}/api/token`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
