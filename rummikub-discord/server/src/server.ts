@@ -3,8 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
-import authRouter from './routes/auth';
-
+import authRouter from './routes/auth.js';
 
 dotenv.config();
 
