@@ -61,7 +61,7 @@ export function useDiscordSDK(): UseDiscordSDKReturn {
         console.log('Step 4: Got authorization code');
 
         console.log('Step 5: Exchanging code for token');
-        const response = await fetch(`${SERVER_URL}/api/token`, {
+        const response = await fetch(`/api/token`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

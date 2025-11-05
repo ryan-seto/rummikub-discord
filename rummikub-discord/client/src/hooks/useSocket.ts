@@ -7,9 +7,9 @@ export function useSocket(channelId: string | null) {
   useEffect(() => {
     if (!channelId) return;
 
-    // Connect using relative URL (proxied through vite)
-    socketRef.current = io({
-      path: '/socket.io',
+    // Connect using relative URL for Discord proxy
+    socketRef.current = io('/socket', {
+      path: '/socket',
       transports: ['websocket', 'polling'],
     });
 
