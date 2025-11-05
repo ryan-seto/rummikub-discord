@@ -43,9 +43,38 @@ function App() {
     syncGameState,
   } = useGameStore();
 
+  interface DiscordUser {
+    id: string;
+    username: string;
+    discriminator: string;
+    avatar?: string;
+  }
+
+  const [discordUser, setDiscordUser] = useState<DiscordUser | null>(null);
   const [hasInitialized, setHasInitialized] = useState(false);
   const [turnError, setTurnError] = useState<string | null>(null);
   const isSyncing = useRef(false);
+
+  useEffect(() => {
+    // Grab the Discord proxy ticket from the URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const ticket = urlParams.get('discord_proxy_ticket');
+
+    if (ticket) {
+      // Send it to your backend for validation
+      fetch(`https://your-backend.onrender.com/auth/discord?discord_proxy_ticket=${ticket}`, {
+        credentials: 'include', // Important if your backend sets cookies/sessions
+      })
+        .then(res => res.json())
+        .then(data => {
+          console.log('Discord user session:', data.user);
+          setDiscordUser(data.user); // Store user info in state
+        })
+        .catch(err => console.error('Error validating Discord ticket:', err));
+    } else {
+      console.warn('No Discord proxy ticket found in URL');
+    }
+  }, []); // Empty dependency array → runs once when the app loads
 
   // Initialize game when Discord SDK is ready
   useEffect(() => {
@@ -159,7 +188,7 @@ function App() {
       }
     }
   }, [channelId, myPlayerId, undoTurn, drawTile, endTurn]);
-  
+
   // Turn timer countdown
   useEffect(() => {
     if (phase !== GamePhase.PLAYING || !isMyTurn) return;
