@@ -28,11 +28,11 @@ console.log('DISCORD_CLIENT_SECRET:', process.env.DISCORD_CLIENT_SECRET ? 'Set' 
 // MIDDLEWARE
 const allowedOrigins = process.env.NODE_ENV === 'production'
   ? [
-      'https://rummikub-discord-rgkwphty2-ryan-setos-projects.vercel.app',
-      'https://discord.com',
-      'https://ptb.discord.com',
-      'https://canary.discord.com'
-    ]
+    'https://rummikub-discord-rgkwphty2-ryan-setos-projects.vercel.app',
+    'https://discord.com',
+    'https://ptb.discord.com',
+    'https://canary.discord.com'
+  ]
   : '*';
 
 app.use(cors({
@@ -53,53 +53,68 @@ app.use('/auth', authRouter);
 // app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
 // Health check endpoint
-app.get( '/api/health', (req: Request, res: Response) => {
+app.get('/api/health', (req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // OAuth token exchange endpoint
-app.post( '/api/token', async (req: Request, res: Response) => {
+app.post('/api/token', async (req: Request, res: Response) => {
   try {
     const { code } = req.body;
 
     if (!code) {
+      console.error('No authorization code provided');
       return res.status(400).json({ error: 'Authorization code is required' });
     }
 
     const clientId = process.env.VITE_DISCORD_CLIENT_ID;
     const clientSecret = process.env.DISCORD_CLIENT_SECRET;
+    const redirectUri = process.env.DISCORD_REDIRECT_URI; // make sure this is set on Render
 
-    if (!clientId || !clientSecret) {
-      console.error('Missing Discord credentials');
+    if (!clientId || !clientSecret || !redirectUri) {
+      console.error('Missing Discord credentials or redirect URI');
       return res.status(500).json({ error: 'Server configuration error' });
     }
 
-    const response = await fetch('https://discord.com/api/oauth2/token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        client_id: clientId,
-        client_secret: clientSecret,
-        grant_type: 'authorization_code',
-        code: code,
-      }),
+    const params = new URLSearchParams({
+      client_id: clientId,
+      client_secret: clientSecret,
+      grant_type: 'authorization_code',
+      code,
+      redirect_uri: redirectUri,
     });
 
-    const data = await response.json() as { access_token?: string; error?: string };
+    console.log('Exchanging token with Discord for code:', code);
+
+    const response = await fetch('https://discord.com/api/oauth2/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params,
+    });
+
+    console.log('Discord response status:', response.status);
+
+    const data = await response.json() as { access_token?: string; error?: string; error_description?: string };
 
     if (!response.ok) {
       console.error('Discord OAuth error:', data);
       return res.status(response.status).json({ error: 'Failed to exchange token', details: data });
     }
 
+    if (!data.access_token) {
+      console.error('No access token returned by Discord:', data);
+      return res.status(500).json({ error: 'Discord did not return an access token', details: data });
+    }
+
+    console.log('Token exchange successful');
     res.json({ access_token: data.access_token });
+
   } catch (error) {
     console.error('Token exchange error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Internal server error', details: error });
   }
 });
+
 
 // Game state storage with private hands
 interface ServerGameState {
@@ -231,7 +246,7 @@ function validateInitialMeld(board: any[], playerId: string, game: any): { valid
 }
 
 // Initialize a new game
-app.post( '/api/games/init', (req: Request, res: Response) => {
+app.post('/api/games/init', (req: Request, res: Response) => {
   const { channelId, players } = req.body;
 
   if (!channelId || !players || players.length < 2) {
@@ -286,7 +301,7 @@ app.post( '/api/games/init', (req: Request, res: Response) => {
 });
 
 // Get player's private hand
-app.get( '/api/games/:gameId/hand/:playerId', (req: Request, res: Response) => {
+app.get('/api/games/:gameId/hand/:playerId', (req: Request, res: Response) => {
   const { gameId, playerId } = req.params;
   const game = games.get(gameId);
 
@@ -299,7 +314,7 @@ app.get( '/api/games/:gameId/hand/:playerId', (req: Request, res: Response) => {
 });
 
 // Get public game state (no hands)
-app.get( '/api/games/:gameId/state', (req: Request, res: Response) => {
+app.get('/api/games/:gameId/state', (req: Request, res: Response) => {
   const { gameId } = req.params;
   const game = games.get(gameId);
 
@@ -327,7 +342,7 @@ app.get( '/api/games/:gameId/state', (req: Request, res: Response) => {
 });
 
 // Start game
-app.post( '/api/games/:gameId/start', (req: Request, res: Response) => {
+app.post('/api/games/:gameId/start', (req: Request, res: Response) => {
   const { gameId } = req.params;
   const game = games.get(gameId);
 
@@ -362,7 +377,7 @@ app.post( '/api/games/:gameId/start', (req: Request, res: Response) => {
 });
 
 // Place tile
-app.post( '/api/games/:gameId/place', (req: Request, res: Response) => {
+app.post('/api/games/:gameId/place', (req: Request, res: Response) => {
   const { gameId } = req.params;
   const { playerId, tile, position, setId } = req.body;
   const game = games.get(gameId);
@@ -506,7 +521,7 @@ app.post( '/api/games/:gameId/place', (req: Request, res: Response) => {
 });
 
 // Move tile on board (for rearranging)
-app.post( '/api/games/:gameId/move', (req: Request, res: Response) => {
+app.post('/api/games/:gameId/move', (req: Request, res: Response) => {
   const { gameId } = req.params;
   const { tileId, newPosition, newSetId, playerId } = req.body;
   const game = games.get(gameId);
@@ -729,7 +744,7 @@ function canBecomeValidGroup(tiles: any[], jokerCount: number = 0): boolean {
 }
 
 // Draw tile
-app.post( '/api/games/:gameId/draw', (req: Request, res: Response) => {
+app.post('/api/games/:gameId/draw', (req: Request, res: Response) => {
   const { gameId } = req.params;
   const { playerId } = req.body;
   const game = games.get(gameId);
@@ -887,7 +902,7 @@ function checkWinCondition(game: ServerGameState, playerId: string) {
 }
 
 // End turn
-app.post( '/api/games/:gameId/endturn', (req: Request, res: Response) => {
+app.post('/api/games/:gameId/endturn', (req: Request, res: Response) => {
   const { gameId } = req.params;
   const { playerId } = req.body;
   const game = games.get(gameId);
@@ -997,7 +1012,7 @@ app.post( '/api/games/:gameId/endturn', (req: Request, res: Response) => {
 });
 
 // Undo turn
-app.post( '/api/games/:gameId/undo', (req: Request, res: Response) => {
+app.post('/api/games/:gameId/undo', (req: Request, res: Response) => {
   const { gameId } = req.params;
   const { playerId } = req.body;
   const game = games.get(gameId);
@@ -1042,7 +1057,7 @@ app.post( '/api/games/:gameId/undo', (req: Request, res: Response) => {
 });
 
 // Undo last action
-app.post( '/api/games/:gameId/undolast', (req: Request, res: Response) => {
+app.post('/api/games/:gameId/undolast', (req: Request, res: Response) => {
   const { gameId } = req.params;
   const { playerId } = req.body;
   const game = games.get(gameId);
