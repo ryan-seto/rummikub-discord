@@ -18,16 +18,21 @@ const io = new Server(httpServer, {
 const PORT = process.env.PORT || 3001;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production' 
+    ? ['https://your-vercel-app.vercel.app'] // We'll update this after Vercel deployment
+    : '*',
+  credentials: true
+}));
 app.use(express.json());
 
 // Health check endpoint
-app.get('/api/health', (req, res) => {
+app.get('${SERVER_URL}/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // OAuth token exchange endpoint
-app.post('/api/token', async (req, res) => {
+app.post('${SERVER_URL}/api/token', async (req, res) => {
   try {
     const { code } = req.body;
 
@@ -200,7 +205,7 @@ function validateInitialMeld(board: any[], playerId: string, game: any): { valid
 }
 
 // Initialize a new game
-app.post('/api/games/init', (req, res) => {
+app.post('${SERVER_URL}/api/games/init', (req, res) => {
   const { channelId, players } = req.body;
 
   if (!channelId || !players || players.length < 2) {
@@ -255,7 +260,7 @@ app.post('/api/games/init', (req, res) => {
 });
 
 // Get player's private hand
-app.get('/api/games/:gameId/hand/:playerId', (req, res) => {
+app.get('${SERVER_URL}/api/games/:gameId/hand/:playerId', (req, res) => {
   const { gameId, playerId } = req.params;
   const game = games.get(gameId);
 
@@ -268,7 +273,7 @@ app.get('/api/games/:gameId/hand/:playerId', (req, res) => {
 });
 
 // Get public game state (no hands)
-app.get('/api/games/:gameId/state', (req, res) => {
+app.get('${SERVER_URL}/api/games/:gameId/state', (req, res) => {
   const { gameId } = req.params;
   const game = games.get(gameId);
 
@@ -296,7 +301,7 @@ app.get('/api/games/:gameId/state', (req, res) => {
 });
 
 // Start game
-app.post('/api/games/:gameId/start', (req, res) => {
+app.post('${SERVER_URL}/api/games/:gameId/start', (req, res) => {
   const { gameId } = req.params;
   const game = games.get(gameId);
 
@@ -331,7 +336,7 @@ app.post('/api/games/:gameId/start', (req, res) => {
 });
 
 // Place tile
-app.post('/api/games/:gameId/place', (req, res) => {
+app.post('${SERVER_URL}/api/games/:gameId/place', (req, res) => {
   const { gameId } = req.params;
   const { playerId, tile, position, setId } = req.body;
   const game = games.get(gameId);
@@ -475,7 +480,7 @@ app.post('/api/games/:gameId/place', (req, res) => {
 });
 
 // Move tile on board (for rearranging)
-app.post('/api/games/:gameId/move', (req, res) => {
+app.post('${SERVER_URL}/api/games/:gameId/move', (req, res) => {
   const { gameId } = req.params;
   const { tileId, newPosition, newSetId, playerId } = req.body;
   const game = games.get(gameId);
@@ -700,7 +705,7 @@ function canBecomeValidGroup(tiles: any[], jokerCount: number = 0): boolean {
 }
 
 // Draw tile
-app.post('/api/games/:gameId/draw', (req, res) => {
+app.post('${SERVER_URL}/api/games/:gameId/draw', (req, res) => {
   const { gameId } = req.params;
   const { playerId } = req.body;
   const game = games.get(gameId);
@@ -858,7 +863,7 @@ function checkWinCondition(game: ServerGameState, playerId: string) {
 }
 
 // End turn
-app.post('/api/games/:gameId/endturn', (req, res) => {
+app.post('${SERVER_URL}/api/games/:gameId/endturn', (req, res) => {
   const { gameId } = req.params;
   const { playerId } = req.body;
   const game = games.get(gameId);
@@ -968,7 +973,7 @@ app.post('/api/games/:gameId/endturn', (req, res) => {
 });
 
 // Undo turn
-app.post('/api/games/:gameId/undo', (req, res) => {
+app.post('${SERVER_URL}/api/games/:gameId/undo', (req, res) => {
   const { gameId } = req.params;
   const { playerId } = req.body;
   const game = games.get(gameId);
@@ -1013,7 +1018,7 @@ app.post('/api/games/:gameId/undo', (req, res) => {
 });
 
 // Undo last action
-app.post('/api/games/:gameId/undolast', (req, res) => {
+app.post('${SERVER_URL}/api/games/:gameId/undolast', (req, res) => {
   const { gameId } = req.params;
   const { playerId } = req.body;
   const game = games.get(gameId);

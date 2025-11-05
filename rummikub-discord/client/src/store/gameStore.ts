@@ -2,6 +2,9 @@ import { create } from 'zustand';
 import { GameState, GamePhase, Player, Tile, TileOnBoard, PlayerHand } from '../types/game';
 import { TURN_TIME_SECONDS } from '../constants';
 
+// Server URL - uses environment variable in production, localhost in dev
+const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
+
 interface GameStore extends GameState {
   // Local player state
   myPlayerId: string | null;
