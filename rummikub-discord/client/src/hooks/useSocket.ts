@@ -9,7 +9,7 @@ export function useSocket(channelId: string | null) {
 
     // Connect to Socket.IO through Discord's proxy
     // The '/socket' maps to your backend via URL Mappings
-    socketRef.current = io('/socket', {
+    socketRef.current = io('/', {
       path: '/socket/socket.io', // Socket.IO endpoint path
       transports: ['websocket', 'polling'],
       reconnection: true,
@@ -45,12 +45,12 @@ export function useSocket(channelId: string | null) {
   const onGameStateUpdate = (callback: (gameState: any) => void) => {
     if (socketRef.current) {
       socketRef.current.on('game-state-update', callback);
-      
+
       return () => {
         socketRef.current?.off('game-state-update', callback);
       };
     }
-    return () => {};
+    return () => { };
   };
 
   return {
