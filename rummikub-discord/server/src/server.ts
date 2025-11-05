@@ -28,7 +28,7 @@ console.log('DISCORD_CLIENT_SECRET:', process.env.DISCORD_CLIENT_SECRET ? 'Set' 
 // MIDDLEWARE
 const allowedOrigins = process.env.NODE_ENV === 'production'
   ? [
-    'https://rummikub-discord-rgkwphty2-ryan-setos-projects.vercel.app',
+    'https://rummikub-discord.vercel.app',
     'https://discord.com',
     'https://ptb.discord.com',
     'https://canary.discord.com'
