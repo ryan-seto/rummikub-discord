@@ -46,38 +46,38 @@ function App() {
     syncGameState,
   } = useGameStore();
 
-  interface DiscordUser {
-    id: string;
-    username: string;
-    discriminator: string;
-    avatar?: string;
-  }
+  // interface DiscordUser {
+  //   id: string;
+  //   username: string;
+  //   discriminator: string;
+  //   avatar?: string;
+  // }
 
-  const [discordUser, setDiscordUser] = useState<DiscordUser | null>(null);
+  // const [discordUser, setDiscordUser] = useState<DiscordUser | null>(null);
   const [hasInitialized, setHasInitialized] = useState(false);
   const [turnError, setTurnError] = useState<string | null>(null);
   const isSyncing = useRef(false);
 
-  useEffect(() => {
-    // Grab the Discord proxy ticket from the URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const ticket = urlParams.get('discord_proxy_ticket');
+  // useEffect(() => {
+  //   // Grab the Discord proxy ticket from the URL
+  //   const urlParams = new URLSearchParams(window.location.search);
+  //   const ticket = urlParams.get('discord_proxy_ticket');
 
-    if (ticket) {
-      // Send it to your backend for validation
-      fetch(`https://rummy-server-4m92.onrender.com/auth/discord?discord_proxy_ticket=${ticket}`, {
-        credentials: 'include', // Important if your backend sets cookies/sessions
-      })
-        .then(res => res.json())
-        .then(data => {
-          console.log('Discord user session:', data.user);
-          setDiscordUser(data.user); // Store user info in state
-        })
-        .catch(err => console.error('Error validating Discord ticket:', err));
-    } else {
-      console.warn('No Discord proxy ticket found in URL');
-    }
-  }, []); // Empty dependency array → runs once when the app loads
+  //   if (ticket) {
+  //     // Send it to your backend for validation
+  //     fetch(`https://rummy-server-4m92.onrender.com/auth/discord?discord_proxy_ticket=${ticket}`, {
+  //       credentials: 'include', // Important if your backend sets cookies/sessions
+  //     })
+  //       .then(res => res.json())
+  //       .then(data => {
+  //         console.log('Discord user session:', data.user);
+  //         setDiscordUser(data.user); // Store user info in state
+  //       })
+  //       .catch(err => console.error('Error validating Discord ticket:', err));
+  //   } else {
+  //     console.warn('No Discord proxy ticket found in URL');
+  //   }
+  // }, []); // Empty dependency array → runs once when the app loads
 
   // Initialize game when Discord SDK is ready
   useEffect(() => {
@@ -408,75 +408,66 @@ function App() {
 
   // Playing phase
   return (
-    <Router>
-      <Routes>
-        {/* Route for the Discord login page */}
-        <Route path="/" element={<DiscordLogin />} />
+    <DndProvider backend={HTML5Backend}>
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-slate-800 p-4">
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <div className="bg-gray-800 rounded-lg p-4 mb-4 shadow-lg">
+            <div className="flex items-center justify-between">
+              <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">
+                Rummy
+              </h1>
+            </div>
+          </div>
 
-        {/* Route for the OAuth2 callback */}
-        <Route path="/oauth2/callback" element={<OAuthCallback />} />
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-4">
+            {/* Game Board */}
+            <div className="lg:col-span-3 min-h-[600px]">
+              <GameBoard
+                tiles={board}
+                onTileDrop={handleTileDrop}
+              />
+            </div>
 
-        {/* Other routes for the game */}
-        <Route
-          path="/game"
-          element={
-            <DndProvider backend={HTML5Backend}>
-              <div className="min-h-screen bg-gradient-to-br from-gray-900 to-slate-800 p-4">
-                <div className="max-w-7xl mx-auto">
-                  {/* Header */}
-                  <div className="bg-gray-800 rounded-lg p-4 mb-4 shadow-lg">
-                    <div className="flex items-center justify-between">
-                      <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">
-                        Rummy
-                      </h1>
-                    </div>
-                  </div>
+            {/* Sidebar */}
+            <div className="space-y-4">
+              <GameControls
+                isMyTurn={!!isMyTurn}
+                canEndTurn={canEndTurn}
+                canDraw={canDraw}
+                timeRemaining={turnTimeRemaining}
+                onDrawTile={handleDrawTile}
+                onEndTurn={handleEndTurn}
+                onUndo={handleUndoTurn}
+                onUndoLast={handleUndoLastAction}
+                poolSize={pool.length}
+                players={players}
+                currentPlayerIndex={currentPlayerIndex}
+                myPlayerId={myPlayerId}
+              />
 
-                  <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-4">
-                    {/* Game Board */}
-                    <div className="lg:col-span-3 min-h-[600px]">
-                      <GameBoard
-                        tiles={board}
-                        onTileDrop={handleTileDrop}
-                      />
-                    </div>
+              <PlayerList
+                players={players}
+                currentPlayerIndex={currentPlayerIndex}
+                myPlayerId={myPlayerId}
+              />
+            </div>
+          </div>
 
-                    {/* Sidebar */}
-                    <div className="space-y-4">
-                      <GameControls
-                        isMyTurn={!!isMyTurn}
-                        canEndTurn={canEndTurn}
-                        canDraw={canDraw}
-                        timeRemaining={turnTimeRemaining}
-                        onDrawTile={handleDrawTile}
-                        onEndTurn={handleEndTurn}
-                        onUndo={handleUndoTurn}
-                        onUndoLast={handleUndoLastAction}
-                        poolSize={pool.length}
-                        players={players}
-                        currentPlayerIndex={currentPlayerIndex}
-                        myPlayerId={myPlayerId}
-                      />
+          {/* Player Hand */}
+          <PlayerHand
+            tiles={myHand.tiles}
+          />
 
-                      <PlayerList
-                        players={players}
-                        currentPlayerIndex={currentPlayerIndex}
-                        myPlayerId={myPlayerId}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Player Hand */}
-                  <PlayerHand
-                    tiles={myHand.tiles}
-                  />
-                </div>
-              </div>
-            </DndProvider>
-          }
-        />
-      </Routes>
-    </Router>
+          {/* Turn Error Display */}
+          {turnError && (
+            <div className="fixed bottom-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg">
+              {turnError}
+            </div>
+          )}
+        </div>
+      </div>
+    </DndProvider>
   );
 }
 
