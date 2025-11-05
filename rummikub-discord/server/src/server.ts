@@ -24,6 +24,7 @@ console.log('PORT:', process.env.PORT);
 console.log('NODE_ENV:', process.env.NODE_ENV);
 console.log('VITE_DISCORD_CLIENT_ID:', process.env.VITE_DISCORD_CLIENT_ID ? 'Set' : 'Not Set');
 console.log('DISCORD_CLIENT_SECRET:', process.env.DISCORD_CLIENT_SECRET ? 'Set' : 'Not Set');
+console.log('DISCORD_REDIRECT_URI:', process.env.DISCORD_REDIRECT_URI);
 
 // MIDDLEWARE
 const allowedOrigins = process.env.NODE_ENV === 'production'
@@ -85,6 +86,7 @@ app.post('/api/token', async (req: Request, res: Response) => {
     });
 
     console.log('Exchanging token with Discord for code:', code);
+    console.log('Token exchange parameters:', params.toString());
 
     const response = await fetch('https://discord.com/api/oauth2/token', {
       method: 'POST',

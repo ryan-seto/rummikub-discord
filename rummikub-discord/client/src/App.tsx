@@ -62,7 +62,7 @@ function App() {
 
     if (ticket) {
       // Send it to your backend for validation
-      fetch(`https://your-backend.onrender.com/auth/discord?discord_proxy_ticket=${ticket}`, {
+      fetch(`https://rummy-server-4m92.onrender.com/auth/discord?discord_proxy_ticket=${ticket}`, {
         credentials: 'include', // Important if your backend sets cookies/sessions
       })
         .then(res => res.json())
