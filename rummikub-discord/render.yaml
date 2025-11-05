@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: rummikub-discord-server
+    env: node
+    rootDir: rummikub-discord/server
+    buildCommand: npm install --include=dev && npm run build
+    startCommand: npm run start
+    plan: free
+    autoDeploy: true
