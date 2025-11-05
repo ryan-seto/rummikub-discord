@@ -72,6 +72,7 @@ app.get('/api/health', (req: Request, res: Response) => {
 
 // OAuth token exchange endpoint
 app.post('/api/token', async (req: Request, res: Response) => {
+  console.log('POST /api/token called');
   try {
     const { code } = req.body;
 
