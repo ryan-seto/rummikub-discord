@@ -26,28 +26,39 @@ console.log('VITE_DISCORD_CLIENT_ID:', process.env.VITE_DISCORD_CLIENT_ID ? 'Set
 console.log('DISCORD_CLIENT_SECRET:', process.env.DISCORD_CLIENT_SECRET ? 'Set' : 'Not Set');
 console.log('DISCORD_REDIRECT_URI:', process.env.DISCORD_REDIRECT_URI);
 
+
+app.use((req, res, next) => {
+  console.log('Incoming request origin:', req.headers.origin);
+  next();
+});
+
 // MIDDLEWARE
-const allowedOrigins = process.env.NODE_ENV === 'production'
-  ? [
-    'https://rummikub-discord.vercel.app',
-    'https://discord.com',
-    'https://ptb.discord.com',
-    'https://canary.discord.com',
-    'https://1432451260484943933.discordsays.com'
-  ]
-  : '*';
+// const allowedOrigins = process.env.NODE_ENV === 'production'
+//   ? [
+//     'https://rummikub-discord.vercel.app',
+//     'https://discord.com',
+//     'https://ptb.discord.com',
+//     'https://canary.discord.com',
+//     'https://1432451260484943933.discordsays.com'
+//   ]
+//   : '*';
 
+// app.use(cors({
+//   origin: (origin, callback) => {
+//     if (!origin || allowedOrigins.includes(origin)) {
+//       callback(null, true);
+//     } else {
+//       callback(new Error('Not allowed by CORS'));
+//     }
+//   },
+//   credentials: true
+// }));
+
+// Temporary CORS configuration to allow all origins
 app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true
+  origin: '*', // Allow all origins
+  credentials: true // Allow cookies and credentials
 }));
-
 app.use(express.json());
 
 app.use('/auth', authRouter);
