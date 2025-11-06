@@ -90,7 +90,7 @@ export const GameControls: React.FC<GameControlsProps> = ({
                     }
           `}
         >
-          {poolSize === 0 ? '🎴 No Tiles Left' : '🎴 Draw Tile'}  {/* ← Show different text */}
+          {poolSize === 0 ? '🎴 No Tiles Left' : '🎴 Draw Tile'}
         </button>
 
         <button

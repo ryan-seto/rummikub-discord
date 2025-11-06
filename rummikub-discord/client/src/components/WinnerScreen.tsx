@@ -10,11 +10,6 @@ export const WinnerScreen: React.FC<WinnerScreenProps> = ({ winner, onNewGame })
   return (
     <div className="min-h-screen bg-gradient-to-br from-yellow-900 via-amber-900 to-orange-900 flex items-center justify-center p-4">
       <div className="max-w-2xl w-full bg-gray-800 rounded-2xl shadow-2xl p-8 text-center">
-        {/* Trophy */}
-        <div className="text-9xl mb-6 animate-bounce">
-          🏆
-        </div>
-        
         {/* Winner announcement */}
         <h1 className="text-5xl font-bold text-yellow-400 mb-4">
           Victory!
@@ -42,11 +37,6 @@ export const WinnerScreen: React.FC<WinnerScreenProps> = ({ winner, onNewGame })
         <p className="text-gray-300 text-xl mb-8">
           Played all tiles and won the game! 🎴
         </p>
-        
-        {/* Confetti effect */}
-        <div className="text-6xl mb-6">
-          🎉 ✨ 🎊 ⭐ 🌟
-        </div>
         
         {onNewGame && (
           <button

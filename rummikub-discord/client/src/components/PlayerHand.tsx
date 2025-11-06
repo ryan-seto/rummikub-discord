@@ -28,7 +28,6 @@ export const PlayerHand: React.FC<PlayerHandProps> = ({ tiles, onTileClick }) =>
             <Tile
               key={tile.id}
               tile={tile}
-              // onTileClick={() => onTileClick?.(tile)}
               isDraggable={true}
             />
           ))

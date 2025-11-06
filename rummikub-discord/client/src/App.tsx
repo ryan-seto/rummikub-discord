@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+// import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useDiscordSDK } from './hooks/useDiscordSDK';
@@ -13,8 +13,6 @@ import { GamePhase, Player, Tile } from './types/game';
 import { useSocket } from './hooks/useSocket';
 import { TURN_TIME_SECONDS } from './constants';
 import { WinnerScreen } from './components/WinnerScreen';
-import DiscordLogin from './components/DiscordLogin'; // Import the login component
-import OAuthCallback from './pages/OAuthCallback'; // Import the callback component
 
 function App() {
   const { user, participants, isReady, error, channelId } = useDiscordSDK();

@@ -381,6 +381,7 @@ app.post('/api/games/:gameId/start', (req: Request, res: Response) => {
   console.log(`🎮 Game ${gameId} started`);
 
   // Broadcast to all clients in this game
+  const currentPlayerId = game.players[game.currentPlayerIndex]?.id;
   io.to(gameId).emit('game-state-update', {
     phase: game.phase,
     players: game.players.map((p: any) => ({
@@ -395,7 +396,7 @@ app.post('/api/games/:gameId/start', (req: Request, res: Response) => {
     board: game.board,
     poolSize: game.pool.length,
     canDraw: game.actionHistory.length === 0,
-    canEndTurn: game.actionHistory.length > 0,
+    canEndTurn: isBoardValidForEndTurn(game, currentPlayerId),
   });
 
   res.json({ success: true });
@@ -525,6 +526,7 @@ app.post('/api/games/:gameId/place', (req: Request, res: Response) => {
   }
 
   // Broadcast updated board
+  const currentPlayerId = game.players[game.currentPlayerIndex]?.id;
   io.to(gameId).emit('game-state-update', {
     phase: game.phase,
     players: game.players.map((p: any) => ({
@@ -539,7 +541,7 @@ app.post('/api/games/:gameId/place', (req: Request, res: Response) => {
     board: game.board,
     poolSize: game.pool.length,
     canDraw: game.actionHistory.length === 0,
-    canEndTurn: game.actionHistory.length > 0,
+    canEndTurn: isBoardValidForEndTurn(game, currentPlayerId),
   });
 
   res.json({ success: true });
@@ -578,6 +580,8 @@ app.post('/api/games/:gameId/move', (req: Request, res: Response) => {
   }
 
   const tile = game.board[tileIndex];
+  const oldPosition = tile.position;
+  const oldSetId = tile.setId;
 
   // Check if new position is occupied by a different tile
   const existingTileAtPosition = game.board.find(
@@ -629,11 +633,23 @@ app.post('/api/games/:gameId/move', (req: Request, res: Response) => {
     setId: newSetId
   };
 
+  // Track action in history
+  game.actionHistory.push({
+    type: 'move',
+    tile: { ...tile },
+    fromPosition: oldPosition,
+    toPosition: newPosition,
+    oldSetId: oldSetId,
+    newSetId: newSetId,
+    timestamp: Date.now()
+  });
+
   games.set(gameId, game);
 
   console.log(`✅ Tile ${tile.number}-${tile.color} moved to (${newPosition.x}, ${newPosition.y})`);
 
   // Broadcast updated board
+  const currentPlayerId = game.players[game.currentPlayerIndex]?.id;
   io.to(gameId).emit('game-state-update', {
     phase: game.phase,
     players: game.players.map((p: any) => ({
@@ -648,7 +664,7 @@ app.post('/api/games/:gameId/move', (req: Request, res: Response) => {
     board: game.board,
     poolSize: game.pool.length,
     canDraw: game.actionHistory.length === 0,
-    canEndTurn: game.actionHistory.length > 0,
+    canEndTurn: isBoardValidForEndTurn(game, currentPlayerId),
   });
 
   res.json({ success: true });
@@ -853,6 +869,50 @@ function validateBoard(melds: any[][]) {
   return completeMelds.every(meld => {
     return isValidRun(meld) || isValidGroup(meld);
   });
+}
+
+// Check if board is in a valid state for ending turn
+function isBoardValidForEndTurn(game: ServerGameState, playerId: string): boolean {
+  // Empty board is always valid (player is passing)
+  if (game.board.length === 0) {
+    return true;
+  }
+
+  // Group tiles into melds
+  const meldGroups = groupTilesIntoMelds(game.board);
+  const completeMelds = meldGroups.filter(meld => meld.length >= 3);
+
+  // Check all complete melds are valid
+  const allValid = completeMelds.every(meld => isValidRun(meld) || isValidGroup(meld));
+
+  if (!allValid) {
+    return false;
+  }
+
+  // Check that all tiles are in valid melds (no incomplete melds)
+  const allTilesInValidMelds = game.board.every(tile => {
+    const tilesInSameSet = game.board.filter(t => t.setId === tile.setId);
+    return tilesInSameSet.length >= 3 && (isValidRun(tilesInSameSet) || isValidGroup(tilesInSameSet));
+  });
+
+  if (!allTilesInValidMelds) {
+    return false;
+  }
+
+  // If player hasn't completed initial meld, check if they have placed tiles
+  const currentPlayer = game.players.find((p: any) => p.id === playerId);
+  if (currentPlayer && !currentPlayer.hasPlayedInitial) {
+    // If no tiles placed this turn, they can still pass (empty board or no changes)
+    if (game.actionHistory.length === 0) {
+      return true;
+    }
+
+    // If tiles were placed, validate initial meld requirement
+    const initialMeldCheck = validateInitialMeld(game.board, playerId, game);
+    return initialMeldCheck.valid;
+  }
+
+  return true;
 }
 
 function isValidRun(tiles: any[]) {
@@ -1061,6 +1121,7 @@ app.post('/api/games/:gameId/undo', (req: Request, res: Response) => {
   console.log(`📋 Action history cleared: ${game.actionHistory.length} actions`);
 
   // Broadcast undo
+  const currentPlayerId = game.players[game.currentPlayerIndex]?.id;
   io.to(gameId).emit('game-state-update', {
     phase: game.phase,
     players: game.players.map((p: any) => ({
@@ -1075,7 +1136,7 @@ app.post('/api/games/:gameId/undo', (req: Request, res: Response) => {
     board: game.board,
     poolSize: game.pool.length,
     canDraw: game.actionHistory.length === 0,
-    canEndTurn: game.actionHistory.length > 0,
+    canEndTurn: isBoardValidForEndTurn(game, currentPlayerId),
   });
 
   res.json({ success: true, restoredTiles: tilesPlacedThisTurn });
@@ -1127,6 +1188,7 @@ app.post('/api/games/:gameId/undolast', (req: Request, res: Response) => {
   games.set(gameId, game);
 
   // Broadcast undo
+  const currentPlayerId = game.players[game.currentPlayerIndex]?.id;
   io.to(gameId).emit('game-state-update', {
     phase: game.phase,
     players: game.players.map((p: any) => ({
@@ -1141,7 +1203,7 @@ app.post('/api/games/:gameId/undolast', (req: Request, res: Response) => {
     board: game.board,
     poolSize: game.pool.length,
     canDraw: game.actionHistory.length === 0,
-    canEndTurn: game.actionHistory.length > 0,
+    canEndTurn: isBoardValidForEndTurn(game, currentPlayerId),
   });
 
   res.json({ success: true, undoneAction: lastAction });
