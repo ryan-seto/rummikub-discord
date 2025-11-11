@@ -205,12 +205,44 @@ function shuffleTiles(tiles: any[]) {
   return shuffled;
 }
 
-// Calculate meld value
+// Calculate meld value - jokers are valued at what they represent
 function calculateMeldValue(tiles: any[]): number {
-  return tiles.reduce((sum, tile) => {
-    if (tile.isJoker) return sum + 30; // Jokers worth 30
-    return sum + tile.number; // Regular tiles worth face value
-  }, 0);
+  const jokers = tiles.filter(t => t.isJoker);
+  const regularTiles = tiles.filter(t => !t.isJoker);
+
+  // If no jokers, just sum the regular tiles
+  if (jokers.length === 0) {
+    return regularTiles.reduce((sum, tile) => sum + tile.number, 0);
+  }
+
+  // If all jokers, assume minimum value (would need context to know actual value)
+  if (regularTiles.length === 0) {
+    return jokers.length * 1; // Conservative estimate
+  }
+
+  // Determine if it's a run or group based on regular tiles
+  const allSameColor = regularTiles.every(t => t.color === regularTiles[0].color);
+  const allSameNumber = regularTiles.every(t => t.number === regularTiles[0].number);
+
+  if (allSameNumber) {
+    // It's a GROUP - all tiles including jokers represent the same number
+    const number = regularTiles[0].number;
+    return (regularTiles.length + jokers.length) * number;
+  } else if (allSameColor) {
+    // It's a RUN - jokers fill gaps in the sequence
+    const numbers = regularTiles.map(t => t.number).sort((a, b) => a - b);
+    const minNum = numbers[0];
+
+    // Calculate total by summing the complete sequence
+    let total = 0;
+    for (let i = minNum; i <= minNum + tiles.length - 1; i++) {
+      total += i;
+    }
+    return total;
+  }
+
+  // Fallback: sum regular tiles + jokers as 1
+  return regularTiles.reduce((sum, tile) => sum + tile.number, 0) + jokers.length;
 }
 
 // Group tiles into melds by setId
