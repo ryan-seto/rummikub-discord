@@ -11,6 +11,7 @@ interface GameControlsProps {
   onEndTurn: () => void;
   onUndo: () => void;
   onUndoLast: () => void;
+  onReset: () => void;
   poolSize: number;
   players: Player[];
   currentPlayerIndex: number;
@@ -27,6 +28,7 @@ export const GameControls: React.FC<GameControlsProps> = ({
   onEndTurn,
   onUndo,
   onUndoLast,
+  onReset,
   poolSize,
   players,
   currentPlayerIndex,
@@ -147,6 +149,18 @@ export const GameControls: React.FC<GameControlsProps> = ({
           Waiting for other players...
         </div>
       )}
+
+      {/* Reset button (for testing) */}
+      <div className="border-t border-gray-700 pt-4 mt-4">
+        <button
+          onClick={onReset}
+          className="w-full py-2 px-4 rounded-lg font-semibold text-sm
+            bg-red-600 hover:bg-red-700 text-white cursor-pointer
+            transition-all duration-200"
+        >
+          🔄 Reset Game
+        </button>
+      </div>
     </div>
   );
 };

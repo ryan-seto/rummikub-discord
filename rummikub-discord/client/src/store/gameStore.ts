@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import { GameState, GamePhase, Player, Tile, TileOnBoard, PlayerHand } from '../types/game';
-import { TURN_TIME_SECONDS } from '../constants';
 
 // Server URL - uses environment variable in production, localhost in dev
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
@@ -23,6 +22,7 @@ interface GameStore extends GameState {
   endTurn: (channelId: string, playerId?: string) => Promise<void>;  // ← Add playerId param
   undoTurn: (channelId: string, playerId: string) => Promise<void>;
   undoLastAction: (channelId: string, playerId: string) => Promise<void>;
+  resetGame: (channelId: string) => Promise<void>;
   setMyPlayerId: (id: string) => void;
   addPlayer: (player: Player) => void;
   removePlayer: (playerId: string) => void;
@@ -38,7 +38,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   board: [],
   pool: [],
   turnStartBoard: [],
-  turnTimeRemaining: TURN_TIME_SECONDS,
+  turnTimeRemaining: 0, // Will be calculated from turnEndTime
   myPlayerId: null,
   myHand: { tiles: [] },
   canDraw: true,
@@ -269,6 +269,35 @@ export const useGameStore = create<GameStore>((set, get) => ({
       console.log('✅ Last action undone');
     } catch (error: any) {
       console.error('❌ Failed to undo last action:', error);
+    }
+  },
+
+  // Reset game
+  resetGame: async (channelId: string) => {
+    try {
+      console.log('🔄 Resetting game...');
+      const response = await fetch(`/api/games/${channelId}/reset`, {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to reset game');
+      }
+
+      console.log('✅ Game reset - reload page to start fresh');
+
+      // Reset local state
+      set({
+        phase: GamePhase.LOBBY,
+        board: [],
+        myHand: { tiles: [] },
+        turnTimeRemaining: 0,
+        canDraw: true,
+        canUndo: false,
+        canEndTurn: false,
+      });
+    } catch (error) {
+      console.error('❌ Failed to reset game:', error);
     }
   },
 

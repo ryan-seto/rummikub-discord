@@ -323,7 +323,7 @@ function validateInitialMeld(board: any[], playerId: string, game: any): { valid
 
 // Initialize a new game
 app.post('/api/games/init', (req: Request, res: Response) => {
-  const { channelId, players } = req.body;
+  const { channelId, players, reset } = req.body;
 
   if (!channelId || !players || players.length < 2) {
     return res.status(400).json({ error: 'Invalid game initialization' });
@@ -331,10 +331,15 @@ app.post('/api/games/init', (req: Request, res: Response) => {
 
   const gameId = channelId;
 
-  // Check if game already exists - just return success
+  // Check if game already exists - either reset or skip
   if (games.has(gameId)) {
-    console.log(`🎮 Game ${gameId} already exists, skipping initialization`);
-    return res.json({ success: true, gameId, alreadyExists: true });
+    if (reset) {
+      console.log(`🔄 Resetting existing game ${gameId}`);
+      games.delete(gameId);
+    } else {
+      console.log(`🎮 Game ${gameId} already exists, skipping initialization`);
+      return res.json({ success: true, gameId, alreadyExists: true });
+    }
   }
 
   // Create and shuffle tiles
@@ -416,6 +421,23 @@ app.get('/api/games/:gameId/state', (req: Request, res: Response) => {
   };
 
   res.json(publicState);
+});
+
+// Reset/delete a game
+app.post('/api/games/:gameId/reset', (req: Request, res: Response) => {
+  const { gameId } = req.params;
+
+  if (games.has(gameId)) {
+    games.delete(gameId);
+    console.log(`🔄 Game ${gameId} reset/deleted`);
+
+    // Broadcast reset to all clients
+    io.to(gameId).emit('game-reset');
+
+    return res.json({ success: true, message: 'Game reset successfully' });
+  }
+
+  res.status(404).json({ error: 'Game not found' });
 });
 
 // Start game
@@ -948,16 +970,12 @@ function isBoardValidForEndTurn(game: ServerGameState, playerId: string): boolea
 
   // Player has completed initial meld - they must either:
   // 1. Place at least one tile from hand, OR
-  // 2. Keep board unchanged (pass turn)
+  // 2. Draw a tile (which auto-ends turn)
 
+  // In Rummikub, you cannot simply "pass" your turn without playing or drawing
+  // If no tiles were placed from hand, player must draw
   if (!hasPlacedTilesFromHand) {
-    // No tiles placed from hand - board must be unchanged to pass turn
-    // If action history is empty, board is unchanged (can pass)
-    if (game.actionHistory.length === 0) {
-      return true;
-    }
-    // If action history has moves (but no placements), board was modified - must draw or place tiles
-    return false;
+    return false; // Must draw tile or place tiles from hand
   }
 
   // Player placed tiles from hand - validate board state

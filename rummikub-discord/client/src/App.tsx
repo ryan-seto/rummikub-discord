@@ -40,6 +40,7 @@ function App() {
     endTurn,
     undoTurn,
     undoLastAction,
+    resetGame,
     addPlayer,
     syncGameState,
   } = useGameStore();
@@ -443,6 +444,12 @@ function App() {
                 onEndTurn={handleEndTurn}
                 onUndo={handleUndoTurn}
                 onUndoLast={handleUndoLastAction}
+                onReset={async () => {
+                  if (channelId) {
+                    await resetGame(channelId);
+                    window.location.reload();
+                  }
+                }}
                 poolSize={pool.length}
                 players={players}
                 currentPlayerIndex={currentPlayerIndex}
