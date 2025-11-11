@@ -10,6 +10,7 @@ interface GameStore extends GameState {
   myPlayerId: string | null;
   myHand: PlayerHand;
   canDraw: boolean;
+  canUndo: boolean;
   canEndTurn: boolean;
 
   // Actions now call server APIs
@@ -41,6 +42,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   myPlayerId: null,
   myHand: { tiles: [] },
   canDraw: true,
+  canUndo: false,
   canEndTurn: false,
 
   // Initialize game on server

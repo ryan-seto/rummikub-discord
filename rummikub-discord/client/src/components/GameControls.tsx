@@ -4,6 +4,7 @@ import { Player } from '../types/game';
 interface GameControlsProps {
   isMyTurn: boolean;
   canEndTurn: boolean;
+  canUndo: boolean;
   canDraw: boolean;
   timeRemaining: number;
   onDrawTile: () => void;
@@ -19,6 +20,7 @@ interface GameControlsProps {
 export const GameControls: React.FC<GameControlsProps> = ({
   isMyTurn,
   canEndTurn,
+  canUndo,
   canDraw,
   timeRemaining,
   onDrawTile,
@@ -95,11 +97,11 @@ export const GameControls: React.FC<GameControlsProps> = ({
 
         <button
           onClick={onUndo}
-          disabled={!isMyTurn || !canEndTurn}
+          disabled={!isMyTurn || !canUndo}
           className={`
             w-full py-2 px-4 rounded-lg font-semibold text-sm
             transition-all duration-200
-            ${isMyTurn && canEndTurn
+            ${isMyTurn && canUndo
               ? 'bg-yellow-600 hover:bg-yellow-700 text-white cursor-pointer'
               : 'bg-gray-600 text-gray-400 cursor-not-allowed'
             }
@@ -110,10 +112,10 @@ export const GameControls: React.FC<GameControlsProps> = ({
 
         <button
           onClick={onUndoLast}
-          disabled={!isMyTurn || !canEndTurn}
+          disabled={!isMyTurn || !canUndo}
           className={`
             w-full py-3 rounded-lg font-semibold transition-all flex items-center justify-center gap-2
-            ${isMyTurn && canEndTurn
+            ${isMyTurn && canUndo
               ? 'bg-orange-600 hover:bg-orange-700 text-white shadow-lg'
               : 'bg-gray-600 text-gray-400 cursor-not-allowed'
             }

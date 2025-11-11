@@ -443,6 +443,7 @@ app.post('/api/games/:gameId/start', (req: Request, res: Response) => {
     board: game.board,
     poolSize: game.pool.length,
     canDraw: game.actionHistory.length === 0,
+    canUndo: game.actionHistory.length > 0,
     canEndTurn: isBoardValidForEndTurn(game, currentPlayerId),
   });
 
@@ -588,6 +589,7 @@ app.post('/api/games/:gameId/place', (req: Request, res: Response) => {
     board: game.board,
     poolSize: game.pool.length,
     canDraw: game.actionHistory.length === 0,
+    canUndo: game.actionHistory.length > 0,
     canEndTurn: isBoardValidForEndTurn(game, currentPlayerId),
   });
 
@@ -705,6 +707,7 @@ app.post('/api/games/:gameId/move', (req: Request, res: Response) => {
     board: game.board,
     poolSize: game.pool.length,
     canDraw: game.actionHistory.length === 0,
+    canUndo: game.actionHistory.length > 0,
     canEndTurn: isBoardValidForEndTurn(game, currentPlayerId),
   });
 
@@ -1177,6 +1180,7 @@ app.post('/api/games/:gameId/undo', (req: Request, res: Response) => {
     board: game.board,
     poolSize: game.pool.length,
     canDraw: game.actionHistory.length === 0,
+    canUndo: game.actionHistory.length > 0,
     canEndTurn: isBoardValidForEndTurn(game, currentPlayerId),
   });
 
@@ -1244,6 +1248,7 @@ app.post('/api/games/:gameId/undolast', (req: Request, res: Response) => {
     board: game.board,
     poolSize: game.pool.length,
     canDraw: game.actionHistory.length === 0,
+    canUndo: game.actionHistory.length > 0,
     canEndTurn: isBoardValidForEndTurn(game, currentPlayerId),
   });
 

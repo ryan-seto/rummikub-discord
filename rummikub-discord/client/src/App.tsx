@@ -29,6 +29,7 @@ function App() {
     myPlayerId,
     turnTimeRemaining,
     canDraw,
+    canUndo,
     canEndTurn,
     setMyPlayerId,
     initializeGame,
@@ -432,6 +433,7 @@ function App() {
               <GameControls
                 isMyTurn={!!isMyTurn}
                 canEndTurn={canEndTurn}
+                canUndo={canUndo}
                 canDraw={canDraw}
                 timeRemaining={turnTimeRemaining}
                 onDrawTile={handleDrawTile}
