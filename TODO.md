@@ -1,15 +1,14 @@
 Bugs:
 - end turn undo's everything even if the board is in a valid state need to update that
-- if you havent satisfied the 30 point rule you shouldn't be able to manipulate the board, also 30 point just doesn't work
 - mid-game, if you haven't played a tile and you manipulate the board, the undo actions don't enable only draw tile is allowed which isn't right
+- Timer resets to 1:01 instead of 1:00 for some reason
 
 
 Features:
-- Timer works, but it only shows your timer, should update this to show a global timer when the turn switches
 - No way to restart game or start new game at the end, should be able to go back to lobby screen
 - Maybe be able to move tiles from board to hand? (So you don't have to undo)
-- Different tile sorting features
-- Add a "new" indicator for drawn tiles (maybe goes away after a turn?)
+- Sort tile by colour or number
+- Add a draw tile animation to indicate the new tile
 -  "are you sure" popup for drawing a tile?
 - Ready up feature in lobby screen, game can't start unless everyone is ready
 - Variable timer in ready up screen: 30s, 1min, 2min

@@ -979,9 +979,11 @@ function isBoardValidForEndTurn(game: ServerGameState, playerId: string): boolea
   }
 
   // Player placed tiles from hand - validate board state
+  console.log(`🔍 Validating board state for end turn...`);
 
   // Empty board shouldn't happen if tiles were placed, but handle it
   if (game.board.length === 0) {
+    console.log(`❌ Board is empty`);
     return false;
   }
 
@@ -989,43 +991,77 @@ function isBoardValidForEndTurn(game: ServerGameState, playerId: string): boolea
   const meldGroups = groupTilesIntoMelds(game.board);
   const completeMelds = meldGroups.filter(meld => meld.length >= 3);
 
+  console.log(`📋 Found ${completeMelds.length} complete melds`);
+  completeMelds.forEach((meld, idx) => {
+    const isRun = isValidRun(meld);
+    const isGroup = isValidGroup(meld);
+    console.log(`  Meld ${idx + 1}: [${meld.map(t => t.isJoker ? 'JOKER' : `${t.number}-${t.color}`).join(', ')}] - Run: ${isRun}, Group: ${isGroup}`);
+  });
+
   // Check all complete melds are valid
-  const allValid = completeMelds.every(meld => isValidRun(meld) || isValidGroup(meld));
+  const allValid = completeMelds.every(meld => {
+    const isRun = isValidRun(meld, true);  // Enable debug logging
+    const isGroup = isValidGroup(meld, true);  // Enable debug logging
+    const isValid = isRun || isGroup;
+
+    if (!isValid) {
+      console.log(`  ❌ INVALID MELD: [${meld.map(t => t.isJoker ? 'JOKER' : `${t.number}-${t.color}`).join(', ')}] - Not a valid run or group`);
+    }
+
+    return isValid;
+  });
 
   if (!allValid) {
+    console.log(`❌ Not all melds are valid`);
     return false;
   }
 
   // Check that all tiles are in valid melds (no incomplete melds)
   const allTilesInValidMelds = game.board.every(tile => {
     const tilesInSameSet = game.board.filter(t => t.setId === tile.setId);
-    return tilesInSameSet.length >= 3 && (isValidRun(tilesInSameSet) || isValidGroup(tilesInSameSet));
+    const isValid = tilesInSameSet.length >= 3 && (isValidRun(tilesInSameSet) || isValidGroup(tilesInSameSet));
+    if (!isValid) {
+      console.log(`❌ Tile ${tile.isJoker ? 'JOKER' : `${tile.number}-${tile.color}`} is in invalid meld (setId: ${tile.setId}, meld size: ${tilesInSameSet.length})`);
+    }
+    return isValid;
   });
 
+  console.log(`✅ All tiles in valid melds: ${allTilesInValidMelds}`);
   return allTilesInValidMelds;
 }
 
-function isValidRun(tiles: any[]) {
-  if (tiles.length < 3) return false;
+function isValidRun(tiles: any[], debug = false) {
+  if (tiles.length < 3) {
+    if (debug) console.log(`    ❌ Run check: Too few tiles (${tiles.length} < 3)`);
+    return false;
+  }
 
   const jokers = tiles.filter(t => t.isJoker);
   const regularTiles = tiles.filter(t => !t.isJoker);
 
   // If only jokers, valid if reasonable size
   if (regularTiles.length === 0) {
-    return jokers.length >= 3 && jokers.length <= 13;
+    const isValid = jokers.length >= 3 && jokers.length <= 13;
+    if (debug) console.log(`    ${isValid ? '✓' : '❌'} Run check: All jokers (${jokers.length} tiles)`);
+    return isValid;
   }
 
   // All regular tiles must be same color
   const color = regularTiles[0].color;
-  if (!color || regularTiles.some(t => t.color !== color)) return false;
+  if (!color || regularTiles.some(t => t.color !== color)) {
+    if (debug) console.log(`    ❌ Run check: Not all same color (expected ${color})`);
+    return false;
+  }
 
   // Check if numbers with jokers form a valid run
   const numbers = regularTiles.map(t => t.number).sort((a, b) => a - b);
 
   // No duplicates allowed in regular tiles
   const uniqueNumbers = new Set(numbers);
-  if (uniqueNumbers.size !== numbers.length) return false;
+  if (uniqueNumbers.size !== numbers.length) {
+    if (debug) console.log(`    ❌ Run check: Has duplicate numbers [${numbers.join(', ')}]`);
+    return false;
+  }
 
   // Calculate required span
   const minNum = numbers[0];
@@ -1033,32 +1069,54 @@ function isValidRun(tiles: any[]) {
   const span = maxNum - minNum + 1;
 
   // Total tiles should equal span (jokers fill the gaps)
-  return tiles.length === span && span <= 13;
+  const isValid = tiles.length === span && span <= 13;
+  if (debug) {
+    console.log(`    ${isValid ? '✓' : '❌'} Run check: ${tiles.length} tiles, span ${span} (${minNum}-${maxNum}), ${jokers.length} jokers`);
+    if (!isValid && tiles.length !== span) {
+      console.log(`      Reason: tiles.length (${tiles.length}) !== span (${span})`);
+    }
+  }
+  return isValid;
 }
 
-function isValidGroup(tiles: any[]) {
-  if (tiles.length < 3 || tiles.length > 4) return false;
+function isValidGroup(tiles: any[], debug = false) {
+  if (tiles.length < 3 || tiles.length > 4) {
+    if (debug) console.log(`    ❌ Group check: Invalid tile count (${tiles.length}, need 3-4)`);
+    return false;
+  }
 
   const jokers = tiles.filter(t => t.isJoker);
   const regularTiles = tiles.filter(t => !t.isJoker);
 
   // If only jokers, valid if 3-4 jokers
   if (regularTiles.length === 0) {
-    return jokers.length >= 3 && jokers.length <= 4;
+    const isValid = jokers.length >= 3 && jokers.length <= 4;
+    if (debug) console.log(`    ${isValid ? '✓' : '❌'} Group check: All jokers (${jokers.length} tiles)`);
+    return isValid;
   }
 
   // All regular tiles must be same number
   const number = regularTiles[0].number;
-  if (regularTiles.some(t => t.number !== number)) return false;
+  if (regularTiles.some(t => t.number !== number)) {
+    if (debug) console.log(`    ❌ Group check: Not all same number (expected ${number})`);
+    return false;
+  }
 
   // All regular tiles must have different colors
   const colors = regularTiles.map(t => t.color);
   const uniqueColors = new Set(colors);
-  if (uniqueColors.size !== colors.length) return false;
+  if (uniqueColors.size !== colors.length) {
+    if (debug) console.log(`    ❌ Group check: Has duplicate colors [${colors.join(', ')}]`);
+    return false;
+  }
 
   // Check total tiles don't exceed 4 (max colors)
-  if (tiles.length > 4) return false;
+  if (tiles.length > 4) {
+    if (debug) console.log(`    ❌ Group check: Too many tiles (${tiles.length} > 4)`);
+    return false;
+  }
 
+  if (debug) console.log(`    ✓ Group check: Valid group of ${number}s with ${jokers.length} jokers`);
   return true;
 }
 
