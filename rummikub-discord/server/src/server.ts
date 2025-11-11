@@ -237,6 +237,18 @@ function validateInitialMeld(board: any[], playerId: string, game: any): { valid
 
   console.log(`🔍 Checking initial meld for player ${player?.username}`);
 
+  // Get tiles placed from hand this turn (from action history)
+  const tilesPlacedThisTurn = game.actionHistory
+    .filter((action: TurnAction) => action.type === 'place' && action.fromHand)
+    .map((action: TurnAction) => action.tile.id);
+
+  if (tilesPlacedThisTurn.length === 0) {
+    console.log(`❌ No tiles placed from hand this turn`);
+    return { valid: false, message: 'Initial meld must be at least 30 points', totalValue: 0 };
+  }
+
+  console.log(`📋 Tiles placed this turn: ${tilesPlacedThisTurn.length}`);
+
   // Group tiles into melds
   const meldGroups = groupTilesIntoMelds(board);
   const completeMelds = meldGroups.filter(meld => meld.length >= 3);
@@ -246,12 +258,15 @@ function validateInitialMeld(board: any[], playerId: string, game: any): { valid
     return { valid: false, message: 'Initial meld must be at least 30 points', totalValue: 0 };
   }
 
-  // Calculate total value of all valid melds placed this turn
+  // Calculate total value of melds that contain at least one tile placed from hand this turn
   let totalValue = 0;
   completeMelds.forEach(meld => {
-    if (isValidRun(meld) || isValidGroup(meld)) {
+    // Check if this meld contains at least one tile placed from hand this turn
+    const hasTileFromThisTurn = meld.some(tile => tilesPlacedThisTurn.includes(tile.id));
+
+    if (hasTileFromThisTurn && (isValidRun(meld) || isValidGroup(meld))) {
       const meldValue = calculateMeldValue(meld);
-      console.log(`  Meld: ${meld.map(t => `${t.number}-${t.color}`).join(', ')} = ${meldValue} points`);
+      console.log(`  Meld with new tile(s): ${meld.map(t => `${t.number}-${t.color}`).join(', ')} = ${meldValue} points`);
       totalValue += meldValue;
     }
   });
@@ -562,12 +577,6 @@ app.post('/api/games/:gameId/move', (req: Request, res: Response) => {
   if (playerId && currentPlayer.id !== playerId) {
     console.log(`❌ Not player ${playerId}'s turn (current: ${currentPlayer.id})`);
     return res.status(403).json({ error: 'Not your turn' });
-  }
-
-  // Check if player has completed initial meld
-  if (!currentPlayer.hasPlayedInitial) {
-    console.log(`❌ Player ${currentPlayer.username} hasn't completed initial meld - cannot manipulate board`);
-    return res.status(403).json({ error: 'You must complete your initial 30-point meld before manipulating the board' });
   }
 
   console.log(`🔄 Moving tile ${tileId} to position:`, newPosition);
