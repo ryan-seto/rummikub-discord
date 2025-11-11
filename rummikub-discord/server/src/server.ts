@@ -1063,20 +1063,60 @@ function isValidRun(tiles: any[], debug = false) {
     return false;
   }
 
-  // Calculate required span
+  // Calculate gaps between regular tiles
   const minNum = numbers[0];
   const maxNum = numbers[numbers.length - 1];
-  const span = maxNum - minNum + 1;
+  const spanOfRegularTiles = maxNum - minNum + 1;
 
-  // Total tiles should equal span (jokers fill the gaps)
-  const isValid = tiles.length === span && span <= 13;
-  if (debug) {
-    console.log(`    ${isValid ? '✓' : '❌'} Run check: ${tiles.length} tiles, span ${span} (${minNum}-${maxNum}), ${jokers.length} jokers`);
-    if (!isValid && tiles.length !== span) {
-      console.log(`      Reason: tiles.length (${tiles.length}) !== span (${span})`);
+  // Count how many gaps exist between regular tiles
+  let gapsInRegularTiles = spanOfRegularTiles - regularTiles.length;
+
+  // Jokers can fill gaps OR extend on either end
+  // Total tiles = regular tiles + jokers
+  // The sequence must be valid: jokers should either fill gaps or extend the sequence
+
+  // Check if we have enough jokers to fill the gaps
+  if (jokers.length < gapsInRegularTiles) {
+    // Not enough jokers to fill gaps between regular tiles
+    if (debug) {
+      console.log(`    ❌ Run check: Not enough jokers (${jokers.length}) to fill gaps (${gapsInRegularTiles}) between regular tiles`);
     }
+    return false;
   }
-  return isValid;
+
+  // Jokers that fill gaps
+  const jokersFillingGaps = gapsInRegularTiles;
+  // Remaining jokers extend the sequence
+  const jokersExtending = jokers.length - jokersFillingGaps;
+
+  // Total sequence length = regular tiles + jokers filling gaps + jokers extending
+  const totalSequenceLength = regularTiles.length + jokers.length;
+
+  // Check that sequence doesn't exceed 13 (1-13 is max)
+  // Also check that extending doesn't go below 1 or above 13
+  const minPossible = minNum - jokersExtending;
+  const maxPossible = maxNum + jokersExtending;
+
+  // Sequence can't start below 1 or end above 13
+  if (minPossible < 1 || maxPossible > 13) {
+    if (debug) {
+      console.log(`    ❌ Run check: Sequence would be out of bounds (${minPossible}-${maxPossible})`);
+    }
+    return false;
+  }
+
+  // Sequence length can't exceed 13
+  if (totalSequenceLength > 13) {
+    if (debug) {
+      console.log(`    ❌ Run check: Total sequence length (${totalSequenceLength}) exceeds 13`);
+    }
+    return false;
+  }
+
+  if (debug) {
+    console.log(`    ✓ Run check: ${tiles.length} tiles, regular span ${spanOfRegularTiles} (${minNum}-${maxNum}), ${gapsInRegularTiles} gaps, ${jokers.length} jokers (${jokersFillingGaps} filling gaps, ${jokersExtending} extending)`);
+  }
+  return true;
 }
 
 function isValidGroup(tiles: any[], debug = false) {
