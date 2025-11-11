@@ -917,7 +917,23 @@ function validateBoard(melds: any[][]) {
 
 // Check if board is in a valid state for ending turn
 function isBoardValidForEndTurn(game: ServerGameState, playerId: string): boolean {
-  // Empty board is always valid (player is passing)
+  const currentPlayer = game.players.find((p: any) => p.id === playerId);
+
+  // If player hasn't completed initial meld yet, they cannot end turn without placing valid tiles
+  if (currentPlayer && !currentPlayer.hasPlayedInitial) {
+    // Empty board or no actions = cannot end turn (must place tiles or draw)
+    if (game.board.length === 0 || game.actionHistory.length === 0) {
+      return false;
+    }
+
+    // If tiles were placed, validate initial meld requirement
+    const initialMeldCheck = validateInitialMeld(game.board, playerId, game);
+    return initialMeldCheck.valid;
+  }
+
+  // Player has completed initial meld - check if board state is valid
+
+  // Empty board is valid (player is passing)
   if (game.board.length === 0) {
     return true;
   }
@@ -939,24 +955,7 @@ function isBoardValidForEndTurn(game: ServerGameState, playerId: string): boolea
     return tilesInSameSet.length >= 3 && (isValidRun(tilesInSameSet) || isValidGroup(tilesInSameSet));
   });
 
-  if (!allTilesInValidMelds) {
-    return false;
-  }
-
-  // If player hasn't completed initial meld, check if they have placed tiles
-  const currentPlayer = game.players.find((p: any) => p.id === playerId);
-  if (currentPlayer && !currentPlayer.hasPlayedInitial) {
-    // If no tiles placed this turn, they can still pass (empty board or no changes)
-    if (game.actionHistory.length === 0) {
-      return true;
-    }
-
-    // If tiles were placed, validate initial meld requirement
-    const initialMeldCheck = validateInitialMeld(game.board, playerId, game);
-    return initialMeldCheck.valid;
-  }
-
-  return true;
+  return allTilesInValidMelds;
 }
 
 function isValidRun(tiles: any[]) {
