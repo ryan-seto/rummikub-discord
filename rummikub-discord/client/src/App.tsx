@@ -11,7 +11,6 @@ import { PlayerList } from './components/PlayerList';
 import { GameControls } from './components/GameControls';
 import { GamePhase, Player, Tile } from './types/game';
 import { useSocket } from './hooks/useSocket';
-import { TURN_TIME_SECONDS } from './constants';
 import { WinnerScreen } from './components/WinnerScreen';
 
 function App() {
@@ -191,32 +190,36 @@ function App() {
     }
   }, [channelId, myPlayerId, undoTurn, drawTile, endTurn]);
 
-  // Turn timer countdown
+  // Turn timer countdown - now global for all players
   useEffect(() => {
-    if (phase !== GamePhase.PLAYING || !isMyTurn) return;
-
-    // Reset timer when it becomes your turn
-    useGameStore.setState({ turnTimeRemaining: TURN_TIME_SECONDS });
+    if (phase !== GamePhase.PLAYING) return;
 
     const timer = setInterval(() => {
-      const newTime = Math.max(0, useGameStore.getState().turnTimeRemaining - 1);
+      const state = useGameStore.getState();
+      const { turnEndTime } = state;
+
+      if (!turnEndTime) return;
+
+      // Calculate remaining time from server timestamp
+      const now = Date.now();
+      const remainingMs = Math.max(0, turnEndTime - now);
+      const remainingSec = Math.floor(remainingMs / 1000);
 
       useGameStore.setState({
-        turnTimeRemaining: newTime
+        turnTimeRemaining: remainingSec
       });
 
-      // Auto-end turn when timer reaches 0
-      if (newTime === 0) {
+      // Auto-end turn when timer reaches 0 (only for current player)
+      if (remainingSec === 0 && isMyTurn) {
         console.log('⏰ Timer expired! Auto-ending turn...');
         handleTimeExpired();
       }
-    }, 1000);
+    }, 100); // Update every 100ms for smoother countdown
 
     return () => {
-      console.log('⏰ Cleaning up timer');
       clearInterval(timer);
     };
-  }, [phase, isMyTurn, currentPlayerIndex, handleTimeExpired]); // ← Add handleTimeExpired
+  }, [phase, isMyTurn, handleTimeExpired]);
 
   const handleStartGame = async () => {
     if (!channelId) return;

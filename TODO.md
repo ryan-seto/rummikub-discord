@@ -2,7 +2,7 @@ Bugs:
 - end turn undo's everything even if the board is in a valid state need to update that
 - if you havent satisfied the 30 point rule you shouldn't be able to manipulate the board, also 30 point just doesn't work
 - mid-game, if you haven't played a tile and you manipulate the board, the undo actions don't enable only draw tile is allowed which isn't right
-- Now, the issue is that when I try to play a meld of three 9's, I can't move any tiles and I'm not allowed to undo. This shouldn't be the case. Because I made a mistake and wanted to use the 9 for something else and play 2 different melds to meet the 30 point requirement. Also, not sure if it was clear but you should be able to get the 30 points by playing more than 1 meld. One solution is to enfore the 30 point minimum by ending turn
+
 
 Features:
 - Timer works, but it only shows your timer, should update this to show a global timer when the turn switches

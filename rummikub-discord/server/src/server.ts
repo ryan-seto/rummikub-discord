@@ -153,6 +153,7 @@ interface ServerGameState {
   playerHands: { [playerId: string]: any[] };
   actionHistory: TurnAction[];
   hasDrawnThisTurn: boolean;
+  turnEndTime: number; // Unix timestamp (ms) when current turn will end
 }
 
 interface TurnAction {
@@ -167,6 +168,9 @@ interface TurnAction {
 }
 
 const games = new Map<string, ServerGameState>();
+
+// Game constants
+const TURN_TIME_SECONDS = 60;
 
 function createTilePool() {
   const tiles = [];
@@ -364,6 +368,7 @@ app.post('/api/games/init', (req: Request, res: Response) => {
     playerHands,
     actionHistory: [],
     hasDrawnThisTurn: false,
+    turnEndTime: 0, // Will be set when game starts
   };
 
   games.set(gameId, gameState);
@@ -423,6 +428,7 @@ app.post('/api/games/:gameId/start', (req: Request, res: Response) => {
   }
 
   game.phase = 'playing';
+  game.turnEndTime = Date.now() + (TURN_TIME_SECONDS * 1000);
   games.set(gameId, game);
 
   console.log(`🎮 Game ${gameId} started`);
@@ -445,6 +451,7 @@ app.post('/api/games/:gameId/start', (req: Request, res: Response) => {
     canDraw: game.actionHistory.length === 0,
     canUndo: game.actionHistory.length > 0,
     canEndTurn: isBoardValidForEndTurn(game, currentPlayerId),
+    turnEndTime: game.turnEndTime,
   });
 
   res.json({ success: true });
@@ -591,6 +598,7 @@ app.post('/api/games/:gameId/place', (req: Request, res: Response) => {
     canDraw: game.actionHistory.length === 0,
     canUndo: game.actionHistory.length > 0,
     canEndTurn: isBoardValidForEndTurn(game, currentPlayerId),
+    turnEndTime: game.turnEndTime,
   });
 
   res.json({ success: true });
@@ -709,6 +717,7 @@ app.post('/api/games/:gameId/move', (req: Request, res: Response) => {
     canDraw: game.actionHistory.length === 0,
     canUndo: game.actionHistory.length > 0,
     canEndTurn: isBoardValidForEndTurn(game, currentPlayerId),
+    turnEndTime: game.turnEndTime,
   });
 
   res.json({ success: true });
@@ -871,6 +880,7 @@ app.post('/api/games/:gameId/draw', (req: Request, res: Response) => {
   game.currentPlayerIndex = (game.currentPlayerIndex + 1) % game.players.length;
   game.actionHistory = [];
   game.hasDrawnThisTurn = false;
+  game.turnEndTime = Date.now() + (TURN_TIME_SECONDS * 1000); // Set new turn timer
 
   games.set(gameId, game);
 
@@ -893,6 +903,7 @@ app.post('/api/games/:gameId/draw', (req: Request, res: Response) => {
     poolSize: game.pool.length,
     canDraw: true,
     canEndTurn: false,
+    turnEndTime: game.turnEndTime,
   });
 
   res.json({ tile: drawnTile });
@@ -919,10 +930,14 @@ function validateBoard(melds: any[][]) {
 function isBoardValidForEndTurn(game: ServerGameState, playerId: string): boolean {
   const currentPlayer = game.players.find((p: any) => p.id === playerId);
 
+  // Check if player has placed any tiles from hand this turn
+  const tilesPlacedFromHand = game.actionHistory.filter((action: TurnAction) => action.type === 'place' && action.fromHand);
+  const hasPlacedTilesFromHand = tilesPlacedFromHand.length > 0;
+
   // If player hasn't completed initial meld yet, they cannot end turn without placing valid tiles
   if (currentPlayer && !currentPlayer.hasPlayedInitial) {
-    // Empty board or no actions = cannot end turn (must place tiles or draw)
-    if (game.board.length === 0 || game.actionHistory.length === 0) {
+    // Must place tiles from hand to complete initial meld
+    if (!hasPlacedTilesFromHand) {
       return false;
     }
 
@@ -931,11 +946,25 @@ function isBoardValidForEndTurn(game: ServerGameState, playerId: string): boolea
     return initialMeldCheck.valid;
   }
 
-  // Player has completed initial meld - check if board state is valid
+  // Player has completed initial meld - they must either:
+  // 1. Place at least one tile from hand, OR
+  // 2. Keep board unchanged (pass turn)
 
-  // Empty board is valid (player is passing)
+  if (!hasPlacedTilesFromHand) {
+    // No tiles placed from hand - board must be unchanged to pass turn
+    // If action history is empty, board is unchanged (can pass)
+    if (game.actionHistory.length === 0) {
+      return true;
+    }
+    // If action history has moves (but no placements), board was modified - must draw or place tiles
+    return false;
+  }
+
+  // Player placed tiles from hand - validate board state
+
+  // Empty board shouldn't happen if tiles were placed, but handle it
   if (game.board.length === 0) {
-    return true;
+    return false;
   }
 
   // Group tiles into melds
@@ -1114,6 +1143,7 @@ app.post('/api/games/:gameId/endturn', (req: Request, res: Response) => {
   game.currentPlayerIndex = (game.currentPlayerIndex + 1) % game.players.length;
   game.actionHistory = []; // Clear action history for next turn
   game.hasDrawnThisTurn = false; // Reset draw flag
+  game.turnEndTime = Date.now() + (TURN_TIME_SECONDS * 1000); // Set new turn timer
   games.set(gameId, game);
 
   console.log(`🔄 Turn ended, now player ${game.players[game.currentPlayerIndex].username}'s turn`);
@@ -1134,6 +1164,7 @@ app.post('/api/games/:gameId/endturn', (req: Request, res: Response) => {
     poolSize: game.pool.length,
     canDraw: game.pool.length > 0,
     canEndTurn: false,
+    turnEndTime: game.turnEndTime,
   });
 
   res.json({ success: true, nextPlayerIndex: game.currentPlayerIndex });
@@ -1181,6 +1212,7 @@ app.post('/api/games/:gameId/undo', (req: Request, res: Response) => {
     canDraw: game.actionHistory.length === 0,
     canUndo: game.actionHistory.length > 0,
     canEndTurn: isBoardValidForEndTurn(game, currentPlayerId),
+    turnEndTime: game.turnEndTime,
   });
 
   res.json({ success: true, restoredTiles: tilesPlacedThisTurn });
@@ -1249,6 +1281,7 @@ app.post('/api/games/:gameId/undolast', (req: Request, res: Response) => {
     canDraw: game.actionHistory.length === 0,
     canUndo: game.actionHistory.length > 0,
     canEndTurn: isBoardValidForEndTurn(game, currentPlayerId),
+    turnEndTime: game.turnEndTime,
   });
 
   res.json({ success: true, undoneAction: lastAction });

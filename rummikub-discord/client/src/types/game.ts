@@ -65,6 +65,7 @@ export interface GameState {
   pool: Tile[]; // Tiles still in the draw pile
   turnStartBoard: TileOnBoard[]; // Board state at start of turn (for undo)
   turnTimeRemaining: number; // Seconds remaining in current turn
+  turnEndTime?: number; // Unix timestamp (ms) when current turn will end
 }
 
 export interface GameAction {
