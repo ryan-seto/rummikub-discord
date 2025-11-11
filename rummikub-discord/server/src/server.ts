@@ -249,16 +249,50 @@ function calculateMeldValue(tiles: any[]): number {
   return regularTiles.reduce((sum, tile) => sum + tile.number, 0) + jokers.length;
 }
 
-// Group tiles into melds by setId
+// Group tiles into melds by spatial connectivity (same Y position, consecutive X positions)
 function groupTilesIntoMelds(board: any[]): any[][] {
-  const sets: { [setId: string]: any[] } = {};
+  if (board.length === 0) return [];
+
+  // Group tiles by Y position first
+  const rowGroups: { [y: number]: any[] } = {};
   board.forEach(tile => {
-    if (!sets[tile.setId]) {
-      sets[tile.setId] = [];
+    const y = tile.position.y;
+    if (!rowGroups[y]) {
+      rowGroups[y] = [];
     }
-    sets[tile.setId].push(tile);
+    rowGroups[y].push(tile);
   });
-  return Object.values(sets);
+
+  const melds: any[][] = [];
+
+  // For each row, group tiles that are adjacent (consecutive X positions)
+  Object.values(rowGroups).forEach(rowTiles => {
+    // Sort by X position
+    const sorted = rowTiles.sort((a, b) => a.position.x - b.position.x);
+
+    let currentMeld: any[] = [sorted[0]];
+
+    for (let i = 1; i < sorted.length; i++) {
+      const prevTile = sorted[i - 1];
+      const currTile = sorted[i];
+
+      // Check if tiles are adjacent (consecutive X positions)
+      if (currTile.position.x === prevTile.position.x + 1) {
+        currentMeld.push(currTile);
+      } else {
+        // Gap detected - start new meld
+        melds.push(currentMeld);
+        currentMeld = [currTile];
+      }
+    }
+
+    // Add the last meld
+    if (currentMeld.length > 0) {
+      melds.push(currentMeld);
+    }
+  });
+
+  return melds;
 }
 
 // Validate initial meld requirement
@@ -1053,6 +1087,28 @@ function isValidRun(tiles: any[], debug = false) {
     return false;
   }
 
+  // Check if tiles have position information for visual order validation
+  const hasPositions = tiles.every(t => t.position && typeof t.position.x === 'number');
+
+  if (hasPositions) {
+    // Sort tiles by visual position (left to right)
+    const byVisualOrder = [...tiles].sort((a, b) => a.position.x - b.position.x);
+
+    // Extract regular tile numbers in visual order
+    const regularTilesInVisualOrder = byVisualOrder.filter(t => !t.isJoker);
+    const numbersInVisualOrder = regularTilesInVisualOrder.map(t => t.number);
+
+    // Check that regular tiles are in ascending numeric order visually
+    for (let i = 1; i < numbersInVisualOrder.length; i++) {
+      if (numbersInVisualOrder[i] <= numbersInVisualOrder[i - 1]) {
+        if (debug) {
+          console.log(`    ❌ Run check: Tiles not in ascending visual order [${numbersInVisualOrder.join(', ')}]`);
+        }
+        return false;
+      }
+    }
+  }
+
   // Check if numbers with jokers form a valid run
   const numbers = regularTiles.map(t => t.number).sort((a, b) => a - b);
 
@@ -1089,26 +1145,32 @@ function isValidRun(tiles: any[], debug = false) {
   // Remaining jokers extend the sequence
   const jokersExtending = jokers.length - jokersFillingGaps;
 
-  // Total sequence length = regular tiles + jokers filling gaps + jokers extending
+  // Total sequence length = regular tiles + jokers
   const totalSequenceLength = regularTiles.length + jokers.length;
-
-  // Check that sequence doesn't exceed 13 (1-13 is max)
-  // Also check that extending doesn't go below 1 or above 13
-  const minPossible = minNum - jokersExtending;
-  const maxPossible = maxNum + jokersExtending;
-
-  // Sequence can't start below 1 or end above 13
-  if (minPossible < 1 || maxPossible > 13) {
-    if (debug) {
-      console.log(`    ❌ Run check: Sequence would be out of bounds (${minPossible}-${maxPossible})`);
-    }
-    return false;
-  }
 
   // Sequence length can't exceed 13
   if (totalSequenceLength > 13) {
     if (debug) {
       console.log(`    ❌ Run check: Total sequence length (${totalSequenceLength}) exceeds 13`);
+    }
+    return false;
+  }
+
+  // Check that extending doesn't go below 1 or above 13
+  // We need to check all possible ways to distribute the extending jokers
+  // The most restrictive case is when all jokers extend in one direction
+  const minPossibleStart = minNum - jokersExtending;
+  const maxPossibleEnd = maxNum + jokersExtending;
+
+  // At least one valid configuration must exist:
+  // Either: extend left only, extend right only, or split between both
+  const canExtendLeft = minPossibleStart >= 1;
+  const canExtendRight = maxPossibleEnd <= 13;
+  const canSplit = (minNum - Math.floor(jokersExtending / 2)) >= 1 && (maxNum + Math.ceil(jokersExtending / 2)) <= 13;
+
+  if (!canExtendLeft && !canExtendRight && !canSplit) {
+    if (debug) {
+      console.log(`    ❌ Run check: No valid extension possible. Min possible: ${minPossibleStart}, Max possible: ${maxPossibleEnd}`);
     }
     return false;
   }
