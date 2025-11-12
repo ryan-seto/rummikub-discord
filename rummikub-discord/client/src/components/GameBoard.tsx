@@ -13,37 +13,35 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
 
   const calculateSnapPosition = (rawX: number, rawY: number, draggedTileId?: string) => {
     const SNAP_DISTANCE = 1.5;
-    const ROW_HEIGHT = 1;
-    const COL_WIDTH = 1;
 
-    // Snap to grid
-    const snappedX = Math.round(rawX / COL_WIDTH) * COL_WIDTH;
-    const snappedY = Math.round(rawY / ROW_HEIGHT) * ROW_HEIGHT;
-    const adjustedPosition = { x: snappedX, y: snappedY };
+    // Calculate which grid cell the tile center is over
+    // We round to get the nearest grid position
+    const gridX = Math.round(rawX);
+    const gridY = Math.round(rawY);
 
-    let snappedPosition = adjustedPosition;
+    let snappedPosition = { x: gridX, y: gridY };
     let closestDistance = Infinity;
 
-    // Find the CLOSEST tile to snap to (ONLY in the same row)
+    // Check if there's a nearby tile to snap to (in the same row)
     tiles.forEach(existingTile => {
       if (draggedTileId && existingTile.id === draggedTileId) return; // Skip self
 
-      const dx = Math.abs(existingTile.position.x - adjustedPosition.x);
-      const dy = Math.abs(existingTile.position.y - adjustedPosition.y);
+      const dx = Math.abs(existingTile.position.x - gridX);
+      const dy = Math.abs(existingTile.position.y - gridY);
       const distance = Math.sqrt(dx * dx + dy * dy);
 
       // ONLY snap if in EXACT same row (dy === 0) and within horizontal distance
       if (dy === 0 && dx <= SNAP_DISTANCE && dx > 0 && distance < closestDistance) {
         closestDistance = distance;
 
-        if (adjustedPosition.x > existingTile.position.x) {
-          // RIGHT
+        if (gridX > existingTile.position.x) {
+          // Dragging to the RIGHT of existing tile - snap to right side
           snappedPosition = {
             x: existingTile.position.x + 1,
             y: existingTile.position.y
           };
         } else {
-          // LEFT
+          // Dragging to the LEFT of existing tile - snap to left side
           snappedPosition = {
             x: existingTile.position.x - 1,
             y: existingTile.position.y
