@@ -303,48 +303,21 @@ function App() {
       return;
     }
 
-    // Edit to change snap sensitivity and meld spacing
-    const SNAP_DISTANCE = 1.5;  // Increased from 1 to make snapping easier
-    const ROW_HEIGHT = 1;  // Reduced from 1.25 for tighter vertical spacing
-    const COL_WIDTH = 1;
+    // Position is already snapped by GameBoard.tsx - use it directly
+    const snappedPosition = position;
 
-    // Snap both X and Y to grid
-    const snappedX = Math.round(position.x / COL_WIDTH) * COL_WIDTH;
-    const snappedY = Math.round(position.y / ROW_HEIGHT) * ROW_HEIGHT;
-    const adjustedPosition = { x: snappedX, y: snappedY };
-
+    // Determine setId based on nearby tiles
     let snapToSetId: string | null = null;
-    let snappedPosition = adjustedPosition;
-    let closestDistance = Infinity;
 
-    // Find the CLOSEST tile to snap to (ONLY in the same row)
-    // Exclude the tile being moved if it's from the board
     board.forEach(existingTile => {
       if (fromBoard && existingTile.id === tileId) return; // Skip self
 
-      const dx = Math.abs(existingTile.position.x - adjustedPosition.x);
-      const dy = Math.abs(existingTile.position.y - adjustedPosition.y);
-      const distance = Math.sqrt(dx * dx + dy * dy);
+      const dx = Math.abs(existingTile.position.x - position.x);
+      const dy = Math.abs(existingTile.position.y - position.y);
 
-      // ONLY snap if in EXACT same row (dy === 0) and within horizontal distance
-      if (dy === 0 && dx <= SNAP_DISTANCE && dx > 0 && distance < closestDistance) {
-        console.log(`📎 Found nearby tile ${existingTile.isJoker ? 'JOKER' : `${existingTile.number}-${existingTile.color}`} at distance ${distance}`);
-        closestDistance = distance;
+      // If positioned next to an existing tile in the same row, use its setId
+      if (dy === 0 && dx === 1) {
         snapToSetId = existingTile.setId;
-
-        if (adjustedPosition.x > existingTile.position.x) {
-          // RIGHT
-          snappedPosition = {
-            x: existingTile.position.x + 1,
-            y: existingTile.position.y
-          };
-        } else {
-          // LEFT
-          snappedPosition = {
-            x: existingTile.position.x - 1,
-            y: existingTile.position.y
-          };
-        }
       }
     });
 
