@@ -77,8 +77,10 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
           const boardElement = document.getElementById('game-board');
           if (boardElement) {
             const rect = boardElement.getBoundingClientRect();
-            const rawX = (offset.x - rect.left) / 70;
-            const rawY = (offset.y - rect.top) / 85;
+            // Account for padding (p-6 = 24px) when calculating position
+            const BOARD_PADDING = 24;
+            const rawX = (offset.x - rect.left - BOARD_PADDING) / 70;
+            const rawY = (offset.y - rect.top - BOARD_PADDING) / 85;
 
             // Calculate where it will actually snap to
             const snappedPos = calculateSnapPosition(rawX, rawY, item.fromBoard ? item.tile.id : undefined);
@@ -97,8 +99,10 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
           const boardElement = document.getElementById('game-board');
           if (boardElement) {
             const rect = boardElement.getBoundingClientRect();
-            const rawX = (offset.x - rect.left) / 70;
-            const rawY = (offset.y - rect.top) / 85;
+            // Account for padding (p-6 = 24px) when calculating position
+            const BOARD_PADDING = 24;
+            const rawX = (offset.x - rect.left - BOARD_PADDING) / 70;
+            const rawY = (offset.y - rect.top - BOARD_PADDING) / 85;
 
             console.log(`🔢 Raw position: (${rawX.toFixed(2)}, ${rawY.toFixed(2)})`);
 
