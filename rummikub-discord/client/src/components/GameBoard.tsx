@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useDrop } from 'react-dnd';
 import { Tile } from './Tile';
 import { Tile as TileType, TileOnBoard } from '../types/game';
@@ -9,10 +9,25 @@ interface GameBoardProps {
 }
 
 export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
+  const [dragPosition, setDragPosition] = useState<{ x: number; y: number } | null>(null);
+
   const [{ isOver }, drop] = useDrop(
     () => ({
       accept: 'tile',
+      hover: (item: { tile: TileType; fromBoard?: boolean }, monitor) => {
+        const offset = monitor.getClientOffset();
+        if (offset) {
+          const boardElement = document.getElementById('game-board');
+          if (boardElement) {
+            const rect = boardElement.getBoundingClientRect();
+            const x = Math.floor((offset.x - rect.left) / 70);
+            const y = Math.floor((offset.y - rect.top) / 85);
+            setDragPosition({ x, y });
+          }
+        }
+      },
       drop: (item: { tile: TileType; fromBoard?: boolean }, monitor) => {
+        setDragPosition(null); // Clear highlight on drop
         console.log('🎯 Drop detected:', item);
 
         const offset = monitor.getClientOffset();
@@ -42,6 +57,13 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
     [onTileDrop]
   );
 
+  // Clear drag position when not hovering
+  React.useEffect(() => {
+    if (!isOver) {
+      setDragPosition(null);
+    }
+  }, [isOver]);
+
   return (
     <div
       id="game-board"
@@ -65,6 +87,22 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
           ))}
         </div>
       </div>
+
+      {/* Drop zone highlight */}
+      {dragPosition && (
+        <div
+          className="absolute pointer-events-none z-20 rounded-lg animate-pulse"
+          style={{
+            left: `${dragPosition.x * 70}px`,
+            top: `${dragPosition.y * 85}px`,
+            width: '64px',
+            height: '80px',
+            backgroundColor: 'rgba(255, 255, 255, 0.3)',
+            border: '2px solid rgba(255, 255, 255, 0.8)',
+            boxShadow: '0 0 20px rgba(255, 255, 255, 0.6)',
+          }}
+        />
+      )}
 
       {/* Board title */}
       <div className="absolute top-2 left-2 text-white/60 text-sm font-semibold">
