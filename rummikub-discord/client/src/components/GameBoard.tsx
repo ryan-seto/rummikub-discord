@@ -19,8 +19,8 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
     const gridX = Math.floor(rawX + 0.5);
     const gridY = Math.floor(rawY + 0.5);
 
-    console.log('🧮 calculateSnapPosition - raw:', { rawX, rawY }, 'grid:', { gridX, gridY });
-    console.log('🎲 Existing tiles on board:', tiles.map(t => ({ id: t.id, pos: t.position })));
+    console.log(`🧮 calculateSnapPosition - raw: (${rawX.toFixed(2)}, ${rawY.toFixed(2)}) -> grid: (${gridX}, ${gridY})`);
+    console.log(`🎲 Existing tiles: ${JSON.stringify(tiles.map(t => ({ id: t.id, x: t.position.x, y: t.position.y })))}`);
 
     let snappedPosition = { x: gridX, y: gridY };
     let closestDistance = Infinity;
@@ -28,7 +28,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
     // Check if there's a nearby tile to snap to (in the same row)
     tiles.forEach(existingTile => {
       if (draggedTileId && existingTile.id === draggedTileId) {
-        console.log('⏭️ Skipping self:', existingTile.id);
+        console.log(`⏭️ Skipping self: ${existingTile.id}`);
         return; // Skip self
       }
 
@@ -36,7 +36,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
       const dy = Math.abs(existingTile.position.y - gridY);
       const distance = Math.sqrt(dx * dx + dy * dy);
 
-      console.log('📏 Checking tile at', existingTile.position, '- dx:', dx, 'dy:', dy, 'distance:', distance);
+      console.log(`📏 Tile at (${existingTile.position.x}, ${existingTile.position.y}) - dx:${dx} dy:${dy} dist:${distance.toFixed(2)}`);
 
       // ONLY snap if in EXACT same row (dy === 0) and within horizontal distance
       if (dy === 0 && dx <= SNAP_DISTANCE && dx > 0 && distance < closestDistance) {
@@ -48,19 +48,19 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
             x: existingTile.position.x + 1,
             y: existingTile.position.y
           };
-          console.log('➡️ Snapping RIGHT to:', snappedPosition);
+          console.log(`➡️ Snapping RIGHT to (${snappedPosition.x}, ${snappedPosition.y})`);
         } else {
           // Dragging to the LEFT of existing tile - snap to left side
           snappedPosition = {
             x: existingTile.position.x - 1,
             y: existingTile.position.y
           };
-          console.log('⬅️ Snapping LEFT to:', snappedPosition);
+          console.log(`⬅️ Snapping LEFT to (${snappedPosition.x}, ${snappedPosition.y})`);
         }
       }
     });
 
-    console.log('✅ Final snapped position:', snappedPosition);
+    console.log(`✅ Final position: (${snappedPosition.x}, ${snappedPosition.y})`);
     return snappedPosition;
   }, [tiles]);
 
@@ -85,11 +85,10 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
       drop: (item: { tile: TileType; fromBoard?: boolean }, monitor) => {
         console.log('🚨 Drop handler called!');
         setDragPosition(null); // Clear highlight on drop
-        console.log('🎯 Drop detected:', item);
 
         const offset = monitor.getClientOffset();
         if (offset) {
-          console.log('📍 Offset:', offset);
+          console.log(`📍 Offset: (${offset.x}, ${offset.y})`);
 
           const boardElement = document.getElementById('game-board');
           if (boardElement) {
@@ -97,12 +96,12 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
             const rawX = (offset.x - rect.left) / 70;
             const rawY = (offset.y - rect.top) / 85;
 
-            console.log('🔢 Raw position:', { rawX, rawY });
+            console.log(`🔢 Raw position: (${rawX.toFixed(2)}, ${rawY.toFixed(2)})`);
 
             // Use the same snap calculation as the hover preview
             const snappedPos = calculateSnapPosition(rawX, rawY, item.fromBoard ? item.tile.id : undefined);
 
-            console.log('📐 Calculated snap position:', snappedPos);
+            console.log(`📐 Final snap position: (${snappedPos.x}, ${snappedPos.y})`);
 
             onTileDrop(item.tile, snappedPos, item.fromBoard, item.tile.id);
           } else {

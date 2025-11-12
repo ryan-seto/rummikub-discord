@@ -296,7 +296,7 @@ function App() {
     fromBoard: boolean = false,
     tileId?: string
   ) => {
-    console.log('🎯 handleTileDrop called:', { tile, position, fromBoard, tileId });
+    console.log(`🎯 handleTileDrop - position: (${position.x}, ${position.y}), fromBoard: ${fromBoard}, tileId: ${tileId}`);
 
     if (!channelId || !myPlayerId) {
       console.log('❌ Missing channelId or myPlayerId');
@@ -305,6 +305,7 @@ function App() {
 
     // Position is already snapped by GameBoard.tsx - use it directly
     const snappedPosition = position;
+    console.log(`📍 Using GameBoard position: (${snappedPosition.x}, ${snappedPosition.y})`);
 
     // Determine setId based on nearby tiles
     let snapToSetId: string | null = null;
