@@ -11,7 +11,7 @@ interface GameBoardProps {
 export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
   const [dragPosition, setDragPosition] = useState<{ x: number; y: number } | null>(null);
 
-  const calculateSnapPosition = (rawX: number, rawY: number, draggedTileId?: string) => {
+  const calculateSnapPosition = React.useCallback((rawX: number, rawY: number, draggedTileId?: string) => {
     const SNAP_DISTANCE = 1.5;
 
     // Calculate which grid cell the tile center is over
@@ -51,7 +51,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
     });
 
     return snappedPosition;
-  };
+  }, [tiles]);
 
   const [{ isOver }, drop] = useDrop(
     () => ({
@@ -102,7 +102,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
         isOver: monitor.isOver(),
       }),
     }),
-    [onTileDrop]
+    [onTileDrop, calculateSnapPosition]
   );
 
   // Clear drag position when not hovering
