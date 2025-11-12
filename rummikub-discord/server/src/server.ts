@@ -1050,18 +1050,17 @@ function isBoardValidForEndTurn(game: ServerGameState, playerId: string): boolea
     return false;
   }
 
-  // Check that all tiles are in valid melds (no incomplete melds)
-  const allTilesInValidMelds = game.board.every(tile => {
-    const tilesInSameSet = game.board.filter(t => t.setId === tile.setId);
-    const isValid = tilesInSameSet.length >= 3 && (isValidRun(tilesInSameSet) || isValidGroup(tilesInSameSet));
-    if (!isValid) {
-      console.log(`❌ Tile ${tile.isJoker ? 'JOKER' : `${tile.number}-${tile.color}`} is in invalid meld (setId: ${tile.setId}, meld size: ${tilesInSameSet.length})`);
-    }
-    return isValid;
-  });
+  // Check that all tiles are part of a complete meld (no incomplete melds)
+  // Count how many tiles are in complete melds
+  const tilesInCompleteMelds = completeMelds.reduce((count, meld) => count + meld.length, 0);
 
-  console.log(`✅ All tiles in valid melds: ${allTilesInValidMelds}`);
-  return allTilesInValidMelds;
+  if (tilesInCompleteMelds !== game.board.length) {
+    console.log(`❌ Some tiles are not in complete melds (${tilesInCompleteMelds} in melds vs ${game.board.length} total)`);
+    return false;
+  }
+
+  console.log(`✅ All ${game.board.length} tiles are in valid melds`);
+  return true;
 }
 
 function isValidRun(tiles: any[], debug = false) {

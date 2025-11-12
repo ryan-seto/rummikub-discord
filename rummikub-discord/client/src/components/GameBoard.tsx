@@ -23,7 +23,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
           if (boardElement) {
             const rect = boardElement.getBoundingClientRect();
             const x = Math.floor((offset.x - rect.left) / 70);
-            const y = Math.floor((offset.y - rect.top) / 90);
+            const y = Math.floor((offset.y - rect.top) / 85);
 
             console.log('📐 Calculated position:', { x, y });
 
@@ -87,7 +87,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
               style={{
                 position: 'absolute',
                 left: `${tile.position.x * 70}px`,
-                top: `${tile.position.y * 90}px`,
+                top: `${tile.position.y * 85}px`,
                 zIndex: 10,
               }}
             >

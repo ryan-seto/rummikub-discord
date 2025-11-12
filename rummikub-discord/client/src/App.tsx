@@ -303,9 +303,9 @@ function App() {
       return;
     }
 
-    // Edit to chnage snap sensitivity and meld spacing
-    const SNAP_DISTANCE = 1;
-    const ROW_HEIGHT = 1.25;
+    // Edit to change snap sensitivity and meld spacing
+    const SNAP_DISTANCE = 1.5;  // Increased from 1 to make snapping easier
+    const ROW_HEIGHT = 1;  // Reduced from 1.25 for tighter vertical spacing
     const COL_WIDTH = 1;
 
     // Snap both X and Y to grid
@@ -328,7 +328,7 @@ function App() {
 
       // ONLY snap if in EXACT same row (dy === 0) and within horizontal distance
       if (dy === 0 && dx <= SNAP_DISTANCE && dx > 0 && distance < closestDistance) {
-        console.log(`📎 Found nearby tile ${existingTile.number}-${existingTile.color} at distance ${distance}`);
+        console.log(`📎 Found nearby tile ${existingTile.isJoker ? 'JOKER' : `${existingTile.number}-${existingTile.color}`} at distance ${distance}`);
         closestDistance = distance;
         snapToSetId = existingTile.setId;
 
