@@ -11,6 +11,50 @@ interface GameBoardProps {
 export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
   const [dragPosition, setDragPosition] = useState<{ x: number; y: number } | null>(null);
 
+  const calculateSnapPosition = (rawX: number, rawY: number, draggedTileId?: string) => {
+    const SNAP_DISTANCE = 1.5;
+    const ROW_HEIGHT = 1;
+    const COL_WIDTH = 1;
+
+    // Snap to grid
+    const snappedX = Math.round(rawX / COL_WIDTH) * COL_WIDTH;
+    const snappedY = Math.round(rawY / ROW_HEIGHT) * ROW_HEIGHT;
+    const adjustedPosition = { x: snappedX, y: snappedY };
+
+    let snappedPosition = adjustedPosition;
+    let closestDistance = Infinity;
+
+    // Find the CLOSEST tile to snap to (ONLY in the same row)
+    tiles.forEach(existingTile => {
+      if (draggedTileId && existingTile.id === draggedTileId) return; // Skip self
+
+      const dx = Math.abs(existingTile.position.x - adjustedPosition.x);
+      const dy = Math.abs(existingTile.position.y - adjustedPosition.y);
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      // ONLY snap if in EXACT same row (dy === 0) and within horizontal distance
+      if (dy === 0 && dx <= SNAP_DISTANCE && dx > 0 && distance < closestDistance) {
+        closestDistance = distance;
+
+        if (adjustedPosition.x > existingTile.position.x) {
+          // RIGHT
+          snappedPosition = {
+            x: existingTile.position.x + 1,
+            y: existingTile.position.y
+          };
+        } else {
+          // LEFT
+          snappedPosition = {
+            x: existingTile.position.x - 1,
+            y: existingTile.position.y
+          };
+        }
+      }
+    });
+
+    return snappedPosition;
+  };
+
   const [{ isOver }, drop] = useDrop(
     () => ({
       accept: 'tile',
@@ -20,9 +64,12 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
           const boardElement = document.getElementById('game-board');
           if (boardElement) {
             const rect = boardElement.getBoundingClientRect();
-            const x = Math.floor((offset.x - rect.left) / 70);
-            const y = Math.floor((offset.y - rect.top) / 85);
-            setDragPosition({ x, y });
+            const rawX = (offset.x - rect.left) / 70;
+            const rawY = (offset.y - rect.top) / 85;
+
+            // Calculate where it will actually snap to
+            const snappedPos = calculateSnapPosition(rawX, rawY, item.fromBoard ? item.tile.id : undefined);
+            setDragPosition(snappedPos);
           }
         }
       },
@@ -79,15 +126,6 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
         backgroundColor: '#8B6A31'
       }}
     >
-      {/* Grid lines for visual guidance */}
-      <div className="absolute inset-0 pointer-events-none opacity-10">
-        <div className="w-full h-full grid grid-cols-12 gap-0">
-          {Array.from({ length: 144 }).map((_, i) => (
-            <div key={i} className="border border-white/20" />
-          ))}
-        </div>
-      </div>
-
       {/* Drop zone highlight */}
       {dragPosition && (
         <div
