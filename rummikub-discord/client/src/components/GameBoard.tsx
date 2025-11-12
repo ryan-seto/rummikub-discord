@@ -11,7 +11,7 @@ interface GameBoardProps {
 export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
   const [dragPosition, setDragPosition] = useState<{ x: number; y: number } | null>(null);
 
-  const calculateSnapPosition = React.useCallback((rawX: number, rawY: number, draggedTileId?: string) => {
+  const calculateSnapPosition = React.useCallback((rawX: number, rawY: number, draggedTileId?: string, verbose = false) => {
     const SNAP_DISTANCE = 1.5;
 
     // Calculate which grid cell the tile center is over
@@ -19,8 +19,10 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
     const gridX = Math.floor(rawX + 0.5);
     const gridY = Math.floor(rawY + 0.5);
 
-    console.log(`🧮 calculateSnapPosition - raw: (${rawX.toFixed(2)}, ${rawY.toFixed(2)}) -> grid: (${gridX}, ${gridY})`);
-    console.log(`🎲 Existing tiles: ${JSON.stringify(tiles.map(t => ({ id: t.id, x: t.position.x, y: t.position.y })))}`);
+    if (verbose) {
+      console.log(`🧮 calculateSnapPosition - raw: (${rawX.toFixed(2)}, ${rawY.toFixed(2)}) -> grid: (${gridX}, ${gridY})`);
+      console.log(`🎲 Existing tiles: ${JSON.stringify(tiles.map(t => ({ id: t.id, x: t.position.x, y: t.position.y })))}`);
+    }
 
     let snappedPosition = { x: gridX, y: gridY };
     let closestDistance = Infinity;
@@ -28,7 +30,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
     // Check if there's a nearby tile to snap to (in the same row)
     tiles.forEach(existingTile => {
       if (draggedTileId && existingTile.id === draggedTileId) {
-        console.log(`⏭️ Skipping self: ${existingTile.id}`);
+        if (verbose) console.log(`⏭️ Skipping self: ${existingTile.id}`);
         return; // Skip self
       }
 
@@ -36,7 +38,9 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
       const dy = Math.abs(existingTile.position.y - gridY);
       const distance = Math.sqrt(dx * dx + dy * dy);
 
-      console.log(`📏 Tile at (${existingTile.position.x}, ${existingTile.position.y}) - dx:${dx} dy:${dy} dist:${distance.toFixed(2)}`);
+      if (verbose) {
+        console.log(`📏 Tile at (${existingTile.position.x}, ${existingTile.position.y}) - dx:${dx} dy:${dy} dist:${distance.toFixed(2)}`);
+      }
 
       // ONLY snap if in EXACT same row (dy === 0) and within horizontal distance
       if (dy === 0 && dx <= SNAP_DISTANCE && dx > 0 && distance < closestDistance) {
@@ -48,19 +52,19 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
             x: existingTile.position.x + 1,
             y: existingTile.position.y
           };
-          console.log(`➡️ Snapping RIGHT to (${snappedPosition.x}, ${snappedPosition.y})`);
+          if (verbose) console.log(`➡️ Snapping RIGHT to (${snappedPosition.x}, ${snappedPosition.y})`);
         } else {
           // Dragging to the LEFT of existing tile - snap to left side
           snappedPosition = {
             x: existingTile.position.x - 1,
             y: existingTile.position.y
           };
-          console.log(`⬅️ Snapping LEFT to (${snappedPosition.x}, ${snappedPosition.y})`);
+          if (verbose) console.log(`⬅️ Snapping LEFT to (${snappedPosition.x}, ${snappedPosition.y})`);
         }
       }
     });
 
-    console.log(`✅ Final position: (${snappedPosition.x}, ${snappedPosition.y})`);
+    if (verbose) console.log(`✅ Final position: (${snappedPosition.x}, ${snappedPosition.y})`);
     return snappedPosition;
   }, [tiles]);
 
@@ -98,8 +102,8 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
 
             console.log(`🔢 Raw position: (${rawX.toFixed(2)}, ${rawY.toFixed(2)})`);
 
-            // Use the same snap calculation as the hover preview
-            const snappedPos = calculateSnapPosition(rawX, rawY, item.fromBoard ? item.tile.id : undefined);
+            // Use the same snap calculation as the hover preview (with verbose logging)
+            const snappedPos = calculateSnapPosition(rawX, rawY, item.fromBoard ? item.tile.id : undefined, true);
 
             console.log(`📐 Final snap position: (${snappedPos.x}, ${snappedPos.y})`);
 
