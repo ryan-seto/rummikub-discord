@@ -15,20 +15,28 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
     const SNAP_DISTANCE = 1.5;
 
     // Calculate which grid cell the tile center is over
-    // We round to get the nearest grid position
-    const gridX = Math.round(rawX);
-    const gridY = Math.round(rawY);
+    // Use floor + 0.5 offset to get the grid cell (accounts for tile being dragged by its top-left corner)
+    const gridX = Math.floor(rawX + 0.5);
+    const gridY = Math.floor(rawY + 0.5);
+
+    console.log('🧮 calculateSnapPosition - raw:', { rawX, rawY }, 'grid:', { gridX, gridY });
+    console.log('🎲 Existing tiles on board:', tiles.map(t => ({ id: t.id, pos: t.position })));
 
     let snappedPosition = { x: gridX, y: gridY };
     let closestDistance = Infinity;
 
     // Check if there's a nearby tile to snap to (in the same row)
     tiles.forEach(existingTile => {
-      if (draggedTileId && existingTile.id === draggedTileId) return; // Skip self
+      if (draggedTileId && existingTile.id === draggedTileId) {
+        console.log('⏭️ Skipping self:', existingTile.id);
+        return; // Skip self
+      }
 
       const dx = Math.abs(existingTile.position.x - gridX);
       const dy = Math.abs(existingTile.position.y - gridY);
       const distance = Math.sqrt(dx * dx + dy * dy);
+
+      console.log('📏 Checking tile at', existingTile.position, '- dx:', dx, 'dy:', dy, 'distance:', distance);
 
       // ONLY snap if in EXACT same row (dy === 0) and within horizontal distance
       if (dy === 0 && dx <= SNAP_DISTANCE && dx > 0 && distance < closestDistance) {
@@ -40,16 +48,19 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
             x: existingTile.position.x + 1,
             y: existingTile.position.y
           };
+          console.log('➡️ Snapping RIGHT to:', snappedPosition);
         } else {
           // Dragging to the LEFT of existing tile - snap to left side
           snappedPosition = {
             x: existingTile.position.x - 1,
             y: existingTile.position.y
           };
+          console.log('⬅️ Snapping LEFT to:', snappedPosition);
         }
       }
     });
 
+    console.log('✅ Final snapped position:', snappedPosition);
     return snappedPosition;
   }, [tiles]);
 
@@ -72,6 +83,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
         }
       },
       drop: (item: { tile: TileType; fromBoard?: boolean }, monitor) => {
+        console.log('🚨 Drop handler called!');
         setDragPosition(null); // Clear highlight on drop
         console.log('🎯 Drop detected:', item);
 
@@ -85,10 +97,12 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
             const rawX = (offset.x - rect.left) / 70;
             const rawY = (offset.y - rect.top) / 85;
 
+            console.log('🔢 Raw position:', { rawX, rawY });
+
             // Use the same snap calculation as the hover preview
             const snappedPos = calculateSnapPosition(rawX, rawY, item.fromBoard ? item.tile.id : undefined);
 
-            console.log('📐 Calculated position:', snappedPos);
+            console.log('📐 Calculated snap position:', snappedPos);
 
             onTileDrop(item.tile, snappedPos, item.fromBoard, item.tile.id);
           } else {
