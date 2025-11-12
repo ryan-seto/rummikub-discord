@@ -148,6 +148,34 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
         backgroundColor: '#8B6A31'
       }}
     >
+      {/* DEBUG: Show grid lines */}
+      {Array.from({ length: 20 }).map((_, x) => (
+        <div
+          key={`grid-v-${x}`}
+          className="absolute pointer-events-none"
+          style={{
+            left: `${x * 70}px`,
+            top: 0,
+            bottom: 0,
+            width: '1px',
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+          }}
+        />
+      ))}
+      {Array.from({ length: 15 }).map((_, y) => (
+        <div
+          key={`grid-h-${y}`}
+          className="absolute pointer-events-none"
+          style={{
+            top: `${y * 85}px`,
+            left: 0,
+            right: 0,
+            height: '1px',
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+          }}
+        />
+      ))}
+
       {/* Drop zone highlight */}
       {dragPosition && (
         <div
@@ -161,7 +189,11 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
             border: '2px solid rgba(255, 255, 255, 0.8)',
             boxShadow: '0 0 20px rgba(255, 255, 255, 0.6)',
           }}
-        />
+        >
+          <div className="text-white text-xs font-bold p-1">
+            ({dragPosition.x}, {dragPosition.y})
+          </div>
+        </div>
       )}
 
       {/* Board title */}
@@ -188,6 +220,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
                 top: `${tile.position.y * 85}px`,
                 zIndex: 10,
               }}
+              title={`Position: (${tile.position.x}, ${tile.position.y})`}
             >
               <Tile
                 tile={tile}
