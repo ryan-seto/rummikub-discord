@@ -12,7 +12,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
   const [dragPosition, setDragPosition] = useState<{ x: number; y: number } | null>(null);
 
   const calculateSnapPosition = React.useCallback((rawX: number, rawY: number, draggedTileId?: string, verbose = false) => {
-    const SNAP_DISTANCE = 1.5;
+    const SNAP_DISTANCE = 2.0; // Increased from 1.5 for better snapping
 
     // Calculate which grid cell the tile center is over
     // Use floor + 0.5 offset to get the grid cell (accounts for tile being dragged by its top-left corner)
@@ -83,7 +83,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
             const rawY = (offset.y - rect.top - BOARD_PADDING) / 85;
 
             // Calculate where it will actually snap to
-            const snappedPos = calculateSnapPosition(rawX, rawY, item.fromBoard ? item.tile.id : undefined);
+            const snappedPos = calculateSnapPosition(rawX, rawY, item.fromBoard ? item.tile.id : undefined, false);
             setDragPosition(snappedPos);
           }
         }
