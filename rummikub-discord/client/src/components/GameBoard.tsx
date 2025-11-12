@@ -82,12 +82,15 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
           const boardElement = document.getElementById('game-board');
           if (boardElement) {
             const rect = boardElement.getBoundingClientRect();
-            const x = Math.floor((offset.x - rect.left) / 70);
-            const y = Math.floor((offset.y - rect.top) / 85);
+            const rawX = (offset.x - rect.left) / 70;
+            const rawY = (offset.y - rect.top) / 85;
 
-            console.log('📐 Calculated position:', { x, y });
+            // Use the same snap calculation as the hover preview
+            const snappedPos = calculateSnapPosition(rawX, rawY, item.fromBoard ? item.tile.id : undefined);
 
-            onTileDrop(item.tile, { x, y }, item.fromBoard, item.tile.id);
+            console.log('📐 Calculated position:', snappedPos);
+
+            onTileDrop(item.tile, snappedPos, item.fromBoard, item.tile.id);
           } else {
             console.log('❌ Board element not found');
           }
