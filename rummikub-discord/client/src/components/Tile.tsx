@@ -1,5 +1,6 @@
 import React from 'react';
 import { useDrag } from 'react-dnd';
+import { getEmptyImage } from 'react-dnd-html5-backend';
 import { Tile as TileType } from '../types/game';
 
 interface TileProps {
@@ -15,7 +16,7 @@ export const Tile: React.FC<TileProps> = ({
   isDraggable = true,
   fromBoard = false
 }) => {
-  const [{ isDragging }, drag] = useDrag(() => ({
+  const [{ isDragging }, drag, preview] = useDrag(() => ({
     type: 'tile',
     item: {
       tile,
@@ -26,6 +27,11 @@ export const Tile: React.FC<TileProps> = ({
       isDragging: monitor.isDragging(),
     }),
   }), [tile, isDraggable, fromBoard]);
+
+  // Use empty drag preview so we only see the hover highlight
+  React.useEffect(() => {
+    preview(getEmptyImage(), { captureDraggingState: true });
+  }, [preview]);
 
   const sizeClasses = {
     small: 'w-8 h-10 text-xs',
