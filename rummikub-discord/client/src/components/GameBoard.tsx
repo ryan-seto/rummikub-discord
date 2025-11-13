@@ -12,14 +12,14 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
   const [dragPosition, setDragPosition] = React.useState<{ x: number; y: number } | null>(null);
 
   // Grid calculation constants - shared between hover and drop handlers
-  // Note: These may differ from actual grid dimensions to adjust for alignment
-  const CELL_WIDTH = 48;
-  const CELL_HEIGHT = 57;
+  // IMPORTANT: These MUST match the actual grid dimensions in the style below
+  const CELL_WIDTH = 45;   // Must match gridTemplateColumns
+  const CELL_HEIGHT = 54;  // Must match gridTemplateRows
   const PADDING = 24;
 
   // Hover offset tweaking - adjust these to perfect the alignment
-  const HOVER_OFFSET_X = 42;  // Positive = shift right, Negative = shift left
-  const HOVER_OFFSET_Y = 12;  // Positive = shift down, Negative = shift up
+  const HOVER_OFFSET_X = 0;  // Positive = shift right, Negative = shift left
+  const HOVER_OFFSET_Y = 0;  // Positive = shift down, Negative = shift up
 
   const calculateGridPosition = React.useCallback((offset: { x: number; y: number }, rect: DOMRect) => {
     const rawX = (offset.x - rect.left - PADDING + HOVER_OFFSET_X) / CELL_WIDTH;
