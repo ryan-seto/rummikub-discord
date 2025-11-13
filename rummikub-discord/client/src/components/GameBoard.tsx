@@ -77,12 +77,12 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
           const boardElement = document.getElementById('game-board');
           if (boardElement) {
             const rect = boardElement.getBoundingClientRect();
-            // Account for padding (p-6 = 24px) when calculating position
+            // Account for padding (p-6 = 24px) - grid content starts inside padding
             const BOARD_PADDING = 24;
             const rawX = (offset.x - rect.left - BOARD_PADDING) / 70;
             const rawY = (offset.y - rect.top - BOARD_PADDING) / 85;
 
-            // Calculate where it will actually snap to
+            // Calculate which grid cell we're over
             const snappedPos = calculateSnapPosition(rawX, rawY, item.fromBoard ? item.tile.id : undefined, false);
             setDragPosition(snappedPos);
           }
@@ -99,7 +99,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
           const boardElement = document.getElementById('game-board');
           if (boardElement) {
             const rect = boardElement.getBoundingClientRect();
-            // Account for padding (p-6 = 24px) when calculating position
+            // Account for padding (p-6 = 24px) - grid content starts inside padding
             const BOARD_PADDING = 24;
             const rawX = (offset.x - rect.left - BOARD_PADDING) / 70;
             const rawY = (offset.y - rect.top - BOARD_PADDING) / 85;
@@ -135,23 +135,26 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
 
   return (
     <div
-      id="game-board"
-      ref={drop}
-      className={`
-        relative w-full h-full
-        rounded-xl shadow-inner
-        p-6
-        overflow-auto
-        ${isOver ? 'ring-4 ring-yellow-400 ring-opacity-50' : ''}
-      `}
-      style={{
-        backgroundColor: '#8B6A31',
-        display: 'grid',
-        gridTemplateColumns: 'repeat(20, 70px)',
-        gridTemplateRows: 'repeat(15, 85px)',
-        gap: 0,
-      }}
+      className="w-full h-full flex items-center justify-center overflow-hidden"
     >
+      <div
+        id="game-board"
+        ref={drop}
+        className={`
+          relative
+          rounded-xl shadow-inner
+          ${isOver ? 'ring-4 ring-yellow-400 ring-opacity-50' : ''}
+        `}
+        style={{
+          backgroundColor: '#8B6A31',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(20, 70px)',
+          gridTemplateRows: 'repeat(15, 85px)',
+          gap: 0,
+          width: '1400px',  // 20 * 70px
+          height: '1275px', // 15 * 85px
+        }}
+      >
       {/* Board title */}
       <div className="absolute top-2 left-2 text-white/60 text-sm font-semibold z-30">
         Game Board
@@ -227,6 +230,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
           />
         </div>
       ))}
+      </div>
     </div>
   );
 };
