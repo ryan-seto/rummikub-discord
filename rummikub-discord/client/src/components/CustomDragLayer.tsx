@@ -56,7 +56,7 @@ export const CustomDragLayer: React.FC = () => {
     <div style={layerStyles}>
       <div style={getItemStyles(currentOffset)}>
         {tile.isJoker ? (
-          <div className="w-10 h-12 bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg shadow-lg border-2 border-amber-200 relative opacity-90">
+          <div className="w-10 h-12 bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg shadow-2xl relative opacity-95">
             <div className="absolute inset-0 flex items-center justify-center">
               <span style={{
                 fontSize: '48px',
@@ -67,7 +67,7 @@ export const CustomDragLayer: React.FC = () => {
             </div>
           </div>
         ) : (
-          <div className="w-10 h-12 bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg shadow-2xl flex items-center justify-center font-bold border-2 border-amber-200 opacity-90">
+          <div className="w-10 h-12 bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg shadow-2xl flex items-center justify-center font-bold opacity-95">
             <span className={`${colorClasses[tile.color || 'black']} text-xl`}>{tile.number}</span>
           </div>
         )}
