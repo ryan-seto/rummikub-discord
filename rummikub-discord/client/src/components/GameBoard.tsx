@@ -1,115 +1,48 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useDrop } from 'react-dnd';
 import { Tile } from './Tile';
 import { Tile as TileType, TileOnBoard } from '../types/game';
 
 interface GameBoardProps {
   tiles: TileOnBoard[];
-  onTileDrop: (tile: TileType, position: { x: number; y: number }, fromBoard?: boolean, tileId?: string) => void; // ← Fixed signature
+  onTileDrop: (tile: TileType, position: { x: number; y: number }, fromBoard?: boolean, tileId?: string) => void;
 }
 
 export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
-  const [dragPosition, setDragPosition] = useState<{ x: number; y: number } | null>(null);
-
-  const calculateSnapPosition = React.useCallback((rawX: number, rawY: number, draggedTileId?: string, verbose = false) => {
-    const SNAP_DISTANCE = 2.0; // Increased from 1.5 for better snapping
-
-    // Calculate which grid cell the tile center is over
-    // Use floor + 0.5 offset to get the grid cell (accounts for tile being dragged by its top-left corner)
-    const gridX = Math.floor(rawX + 0.5);
-    const gridY = Math.floor(rawY + 0.5);
-
-    if (verbose) {
-      console.log(`🧮 calculateSnapPosition - raw: (${rawX.toFixed(2)}, ${rawY.toFixed(2)}) -> grid: (${gridX}, ${gridY})`);
-      console.log(`🎲 Existing tiles: ${JSON.stringify(tiles.map(t => ({ id: t.id, x: t.position.x, y: t.position.y })))}`);
-    }
-
-    let snappedPosition = { x: gridX, y: gridY };
-    let closestDistance = Infinity;
-
-    // Check if there's a nearby tile to snap to (in the same row)
-    tiles.forEach(existingTile => {
-      if (draggedTileId && existingTile.id === draggedTileId) {
-        if (verbose) console.log(`⏭️ Skipping self: ${existingTile.id}`);
-        return; // Skip self
-      }
-
-      const dx = Math.abs(existingTile.position.x - gridX);
-      const dy = Math.abs(existingTile.position.y - gridY);
-      const distance = Math.sqrt(dx * dx + dy * dy);
-
-      if (verbose) {
-        console.log(`📏 Tile at (${existingTile.position.x}, ${existingTile.position.y}) - dx:${dx} dy:${dy} dist:${distance.toFixed(2)}`);
-      }
-
-      // ONLY snap if in EXACT same row (dy === 0) and within horizontal distance
-      if (dy === 0 && dx <= SNAP_DISTANCE && dx > 0 && distance < closestDistance) {
-        closestDistance = distance;
-
-        if (gridX > existingTile.position.x) {
-          // Dragging to the RIGHT of existing tile - snap to right side
-          snappedPosition = {
-            x: existingTile.position.x + 1,
-            y: existingTile.position.y
-          };
-          if (verbose) console.log(`➡️ Snapping RIGHT to (${snappedPosition.x}, ${snappedPosition.y})`);
-        } else {
-          // Dragging to the LEFT of existing tile - snap to left side
-          snappedPosition = {
-            x: existingTile.position.x - 1,
-            y: existingTile.position.y
-          };
-          if (verbose) console.log(`⬅️ Snapping LEFT to (${snappedPosition.x}, ${snappedPosition.y})`);
-        }
-      }
-    });
-
-    if (verbose) console.log(`✅ Final position: (${snappedPosition.x}, ${snappedPosition.y})`);
-    return snappedPosition;
-  }, [tiles]);
-
   const [{ isOver }, drop] = useDrop(
     () => ({
       accept: 'tile',
-      hover: (item: { tile: TileType; fromBoard?: boolean }, monitor) => {
-        const offset = monitor.getClientOffset();
-        if (offset) {
-          const boardElement = document.getElementById('game-board');
-          if (boardElement) {
-            const rect = boardElement.getBoundingClientRect();
-            // No padding offset needed with CSS Grid
-            const rawX = (offset.x - rect.left) / 60;
-            const rawY = (offset.y - rect.top) / 72;
-
-            // Calculate which grid cell we're over
-            const snappedPos = calculateSnapPosition(rawX, rawY, item.fromBoard ? item.tile.id : undefined, false);
-            setDragPosition(snappedPos);
-          }
-        }
-      },
       drop: (item: { tile: TileType; fromBoard?: boolean }, monitor) => {
         console.log('🚨 Drop handler called!');
-        setDragPosition(null); // Clear highlight on drop
 
         const offset = monitor.getClientOffset();
         if (offset) {
-          console.log(`📍 Offset: (${offset.x}, ${offset.y})`);
+          console.log(`📍 Mouse offset: (${offset.x}, ${offset.y})`);
 
           const boardElement = document.getElementById('game-board');
           if (boardElement) {
             const rect = boardElement.getBoundingClientRect();
-            // No padding offset needed with CSS Grid
-            const rawX = (offset.x - rect.left) / 60;
-            const rawY = (offset.y - rect.top) / 72;
+            console.log(`📏 Board rect: left=${rect.left.toFixed(1)}, top=${rect.top.toFixed(1)}, width=${rect.width.toFixed(1)}, height=${rect.height.toFixed(1)}`);
+
+            // Calculate which grid cell the mouse is over
+            // Grid cells are 60px × 72px, with 24px padding
+            const CELL_WIDTH = 60;
+            const CELL_HEIGHT = 72;
+            const PADDING = 24;
+
+            const rawX = (offset.x - rect.left - PADDING) / CELL_WIDTH;
+            const rawY = (offset.y - rect.top - PADDING) / CELL_HEIGHT;
 
             console.log(`🔢 Raw position: (${rawX.toFixed(2)}, ${rawY.toFixed(2)})`);
 
-            // Use the same snap calculation as the hover preview (with verbose logging)
-            const snappedPos = calculateSnapPosition(rawX, rawY, item.fromBoard ? item.tile.id : undefined, true);
+            // Snap to the grid cell the mouse is currently over
+            // Use Math.floor to get the cell containing the cursor
+            const snappedX = Math.max(0, Math.min(19, Math.floor(rawX)));
+            const snappedY = Math.max(0, Math.min(14, Math.floor(rawY)));
 
-            console.log(`📐 Final snap position: (${snappedPos.x}, ${snappedPos.y})`);
+            console.log(`📐 Snapped to cell: (${snappedX}, ${snappedY})`);
 
-            onTileDrop(item.tile, snappedPos, item.fromBoard, item.tile.id);
+            onTileDrop(item.tile, { x: snappedX, y: snappedY }, item.fromBoard, item.tile.id);
           } else {
             console.log('❌ Board element not found');
           }
@@ -121,15 +54,9 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
         isOver: monitor.isOver(),
       }),
     }),
-    [onTileDrop, calculateSnapPosition]
+    [onTileDrop]
   );
 
-  // Clear drag position when not hovering
-  React.useEffect(() => {
-    if (!isOver) {
-      setDragPosition(null);
-    }
-  }, [isOver]);
 
   return (
     <div
@@ -141,6 +68,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
         className={`
           relative
           rounded-xl shadow-inner
+          p-6
           ${isOver ? 'ring-4 ring-yellow-400 ring-opacity-50' : ''}
         `}
         style={{
@@ -149,8 +77,8 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
           gridTemplateColumns: 'repeat(20, 60px)',
           gridTemplateRows: 'repeat(15, 72px)',
           gap: 0,
-          width: '1200px',  // 20 * 60px
-          height: '1080px', // 15 * 72px
+          width: '1248px',  // 20 * 60px + 48px padding (24px * 2)
+          height: '1128px', // 15 * 72px + 48px padding (24px * 2)
         }}
       >
       {/* Board title */}
@@ -162,7 +90,6 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
       {Array.from({ length: 20 * 15 }).map((_, index) => {
         const x = index % 20;
         const y = Math.floor(index / 20);
-        const isDropTarget = dragPosition?.x === x && dragPosition?.y === y;
 
         return (
           <div
@@ -174,21 +101,10 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
               border: '1px solid rgba(255, 255, 255, 0.05)',
             }}
           >
-            {/* Drop zone highlight */}
-            {isDropTarget && (
-              <div
-                className="absolute inset-0 pointer-events-none z-20 rounded-lg animate-pulse"
-                style={{
-                  backgroundColor: 'rgba(255, 255, 255, 0.3)',
-                  border: '2px solid rgba(255, 255, 255, 0.8)',
-                  boxShadow: '0 0 20px rgba(255, 255, 255, 0.6)',
-                }}
-              >
-                <div className="text-white text-xs font-bold p-1">
-                  ({x}, {y})
-                </div>
-              </div>
-            )}
+            {/* Cell coordinate label for debugging */}
+            <div className="absolute top-0 left-0 text-white/20 text-xs pointer-events-none">
+              {x},{y}
+            </div>
           </div>
         );
       })}
