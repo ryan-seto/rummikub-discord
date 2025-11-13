@@ -9,10 +9,33 @@ interface GameBoardProps {
 }
 
 export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
+  const [dragPosition, setDragPosition] = React.useState<{ x: number; y: number } | null>(null);
+
   const [{ isOver }, drop] = useDrop(
     () => ({
       accept: 'tile',
+      hover: (item: { tile: TileType; fromBoard?: boolean }, monitor) => {
+        const offset = monitor.getClientOffset();
+        if (offset) {
+          const boardElement = document.getElementById('game-board');
+          if (boardElement) {
+            const rect = boardElement.getBoundingClientRect();
+            const CELL_WIDTH = 50;
+            const CELL_HEIGHT = 60;
+            const PADDING = 24;
+
+            const rawX = (offset.x - rect.left - PADDING) / CELL_WIDTH;
+            const rawY = (offset.y - rect.top - PADDING) / CELL_HEIGHT;
+
+            const snappedX = Math.max(0, Math.min(19, Math.floor(rawX)));
+            const snappedY = Math.max(0, Math.min(14, Math.floor(rawY)));
+
+            setDragPosition({ x: snappedX, y: snappedY });
+          }
+        }
+      },
       drop: (item: { tile: TileType; fromBoard?: boolean }, monitor) => {
+        setDragPosition(null); // Clear hover preview on drop
         console.log('🚨 Drop handler called!');
 
         const offset = monitor.getClientOffset();
@@ -25,9 +48,9 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
             console.log(`📏 Board rect: left=${rect.left.toFixed(1)}, top=${rect.top.toFixed(1)}, width=${rect.width.toFixed(1)}, height=${rect.height.toFixed(1)}`);
 
             // Calculate which grid cell the mouse is over
-            // Grid cells are 60px × 72px, with 24px padding
-            const CELL_WIDTH = 60;
-            const CELL_HEIGHT = 72;
+            // Grid cells are 50px × 60px, with 24px padding
+            const CELL_WIDTH = 50;
+            const CELL_HEIGHT = 60;
             const PADDING = 24;
 
             const rawX = (offset.x - rect.left - PADDING) / CELL_WIDTH;
@@ -57,6 +80,12 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
     [onTileDrop]
   );
 
+  // Clear drag position when not hovering
+  React.useEffect(() => {
+    if (!isOver) {
+      setDragPosition(null);
+    }
+  }, [isOver]);
 
   return (
     <div
@@ -74,11 +103,11 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
         style={{
           backgroundColor: '#8B6A31',
           display: 'grid',
-          gridTemplateColumns: 'repeat(20, 60px)',
-          gridTemplateRows: 'repeat(15, 72px)',
+          gridTemplateColumns: 'repeat(20, 50px)',
+          gridTemplateRows: 'repeat(15, 60px)',
           gap: 0,
-          width: '1248px',  // 20 * 60px + 48px padding (24px * 2)
-          height: '1128px', // 15 * 72px + 48px padding (24px * 2)
+          width: '1048px',  // 20 * 50px + 48px padding (24px * 2)
+          height: '948px', // 15 * 60px + 48px padding (24px * 2)
         }}
       >
       {/* Board title */}
@@ -90,6 +119,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
       {Array.from({ length: 20 * 15 }).map((_, index) => {
         const x = index % 20;
         const y = Math.floor(index / 20);
+        const isDropTarget = dragPosition?.x === x && dragPosition?.y === y;
 
         return (
           <div
@@ -101,6 +131,21 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
               border: '1px solid rgba(255, 255, 255, 0.05)',
             }}
           >
+            {/* Drop zone highlight */}
+            {isDropTarget && (
+              <div
+                className="absolute inset-0 pointer-events-none z-20 rounded-lg animate-pulse"
+                style={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                  border: '2px solid rgba(255, 255, 255, 0.8)',
+                  boxShadow: '0 0 20px rgba(255, 255, 255, 0.6)',
+                }}
+              >
+                <div className="text-white text-xs font-bold p-1">
+                  ({x}, {y})
+                </div>
+              </div>
+            )}
             {/* Cell coordinate label for debugging */}
             <div className="absolute top-0 left-0 text-white/20 text-xs pointer-events-none">
               {x},{y}
