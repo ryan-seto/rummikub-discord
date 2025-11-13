@@ -1,6 +1,5 @@
 import React from 'react';
 import { useDrag } from 'react-dnd';
-import { getEmptyImage } from 'react-dnd-html5-backend';
 import { Tile as TileType } from '../types/game';
 
 interface TileProps {
@@ -16,7 +15,7 @@ export const Tile: React.FC<TileProps> = ({
   isDraggable = true,
   fromBoard = false
 }) => {
-  const [{ isDragging }, drag, preview] = useDrag(() => ({
+  const [{ isDragging }, drag] = useDrag(() => ({
     type: 'tile',
     item: {
       tile,
@@ -27,11 +26,6 @@ export const Tile: React.FC<TileProps> = ({
       isDragging: monitor.isDragging(),
     }),
   }), [tile, isDraggable, fromBoard]);
-
-  // Hide the default browser drag preview since we're using CustomDragLayer
-  React.useEffect(() => {
-    preview(getEmptyImage(), { captureDraggingState: true });
-  }, [preview]);
 
   const sizeClasses = {
     small: 'w-8 h-10 text-xs',
