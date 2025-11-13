@@ -11,31 +11,42 @@ interface GameBoardProps {
 export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
   const [dragPosition, setDragPosition] = React.useState<{ x: number; y: number } | null>(null);
 
-  const [{ isOver }, drop] = useDrop(
+  // Grid calculation constants - shared between hover and drop handlers
+  // Note: These may differ from actual grid dimensions to adjust for alignment
+  const CELL_WIDTH = 48;
+  const CELL_HEIGHT = 57;
+  const PADDING = 24;
+
+  const calculateGridPosition = React.useCallback((offset: { x: number; y: number }, rect: DOMRect) => {
+    const rawX = (offset.x - rect.left - PADDING) / CELL_WIDTH;
+    const rawY = (offset.y - rect.top - PADDING) / CELL_HEIGHT;
+
+    const snappedX = Math.max(0, Math.min(19, Math.floor(rawX)));
+    const snappedY = Math.max(0, Math.min(14, Math.floor(rawY)));
+
+    return { x: snappedX, y: snappedY };
+  }, []);
+
+  const [{ isOver }, drop] = useDrop<
+    { tile: TileType; fromBoard?: boolean },
+    unknown,
+    { isOver: boolean }
+  >(
     () => ({
       accept: 'tile',
-      hover: (item: { tile: TileType; fromBoard?: boolean }, monitor) => {
+      hover: (item, monitor) => {
         const offset = monitor.getClientOffset();
         if (offset) {
           const boardElement = document.getElementById('game-board');
           if (boardElement) {
             const rect = boardElement.getBoundingClientRect();
-            const CELL_WIDTH = 45;
-            const CELL_HEIGHT = 54;
-            const PADDING = 24;
-
-            const rawX = (offset.x - rect.left - PADDING) / CELL_WIDTH;
-            const rawY = (offset.y - rect.top - PADDING) / CELL_HEIGHT;
-
-            const snappedX = Math.max(0, Math.min(19, Math.floor(rawX)));
-            const snappedY = Math.max(0, Math.min(14, Math.floor(rawY)));
-
-            setDragPosition({ x: snappedX, y: snappedY });
+            const position = calculateGridPosition(offset, rect);
+            setDragPosition(position);
           }
         }
       },
-      drop: (item: { tile: TileType; fromBoard?: boolean }, monitor) => {
-        setDragPosition(null); // Clear hover preview on drop
+      drop: (item, monitor) => {
+        setDragPosition(null);
         console.log('🚨 Drop handler called!');
 
         const offset = monitor.getClientOffset();
@@ -47,25 +58,10 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
             const rect = boardElement.getBoundingClientRect();
             console.log(`📏 Board rect: left=${rect.left.toFixed(1)}, top=${rect.top.toFixed(1)}, width=${rect.width.toFixed(1)}, height=${rect.height.toFixed(1)}`);
 
-            // Calculate which grid cell the mouse is over
-            // Grid cells are 45px × 54px, with 24px padding
-            const CELL_WIDTH = 45;
-            const CELL_HEIGHT = 54;
-            const PADDING = 24;
+            const position = calculateGridPosition(offset, rect);
+            console.log(`📐 Snapped to cell: (${position.x}, ${position.y})`);
 
-            const rawX = (offset.x - rect.left - PADDING) / CELL_WIDTH;
-            const rawY = (offset.y - rect.top - PADDING) / CELL_HEIGHT;
-
-            console.log(`🔢 Raw position: (${rawX.toFixed(2)}, ${rawY.toFixed(2)})`);
-
-            // Snap to the grid cell the mouse is currently over
-            // Use Math.floor to get the cell containing the cursor
-            const snappedX = Math.max(0, Math.min(19, Math.floor(rawX)));
-            const snappedY = Math.max(0, Math.min(14, Math.floor(rawY)));
-
-            console.log(`📐 Snapped to cell: (${snappedX}, ${snappedY})`);
-
-            onTileDrop(item.tile, { x: snappedX, y: snappedY }, item.fromBoard, item.tile.id);
+            onTileDrop(item.tile, position, item.fromBoard, item.tile.id);
           } else {
             console.log('❌ Board element not found');
           }
@@ -77,7 +73,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
         isOver: monitor.isOver(),
       }),
     }),
-    [onTileDrop]
+    [onTileDrop, calculateGridPosition]
   );
 
   // Clear drag position when not hovering
