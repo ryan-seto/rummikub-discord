@@ -388,14 +388,6 @@ function App() {
     <DndProvider backend={HTML5Backend}>
       <div className="min-h-screen bg-gradient-to-br from-gray-900 to-slate-800 p-4">
         <div className="max-w-7xl mx-auto">
-          {/* Header */}
-          <div className="bg-gray-800 rounded-lg p-4 mb-4 shadow-lg">
-            <div className="flex items-center justify-between">
-              <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">
-                Rummy
-              </h1>
-            </div>
-          </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-4">
             {/* Game Board */}

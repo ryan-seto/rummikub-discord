@@ -19,16 +19,21 @@ export const PlayerList: React.FC<PlayerListProps> = ({
         {players.map((player, index) => {
           const isCurrentPlayer = index === currentPlayerIndex;
           const isMe = player.id === myPlayerId;
+          const isMyTurn = isCurrentPlayer && isMe;
 
           return (
             <div
               key={player.id}
               className={`
                 flex items-center justify-between p-3 rounded-lg
-                bg-gray-700
                 transition-all duration-200
-                ${isCurrentPlayer ? 'ring-2 ring-green-400 shadow-lg' : ''}
-                ${isMe ? 'border-2 border-blue-400' : 'border-2 border-transparent'}
+                ${isMyTurn
+                  ? 'bg-green-900/40 ring-4 ring-green-400 shadow-2xl shadow-green-500/50 animate-pulse border-2 border-green-400'
+                  : isCurrentPlayer
+                    ? 'bg-gray-700 ring-2 ring-green-400 shadow-lg'
+                    : isMe
+                      ? 'bg-gray-700 border-2 border-blue-400'
+                      : 'bg-gray-700 border-2 border-transparent'}
               `}
             >
               <div className="flex items-center gap-3">

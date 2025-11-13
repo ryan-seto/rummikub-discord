@@ -1,6 +1,5 @@
 Bugs:
 - end turn undo's everything even if the board is in a valid state need to update that
-- mid-game, if you haven't played a tile and you manipulate the board, the undo actions don't enable only draw tile is allowed which isn't right
 - Timer resets to 1:01 instead of 1:00 for some reason
 
 

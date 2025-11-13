@@ -39,45 +39,26 @@ export const GameControls: React.FC<GameControlsProps> = ({
 
   return (
     <div className="bg-gray-800 rounded-lg p-4 shadow-lg space-y-4">
-      {/* Timer */}
-      <div className="text-center">
-        <div className="text-gray-400 text-sm mb-1">Time Remaining</div>
-        <div
-          className={`
-            text-3xl font-bold font-mono
-            ${timeRemaining < 30 ? 'text-red-500 animate-pulse' : 'text-white'}
-          `}
-        >
-          {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
-        </div>
-      </div>
-
-      {/* Initial Meld Warning */}
-      {(() => {
-        const myPlayerInfo = players.find(p => p.id === myPlayerId);
-        const needsInitialMeld = myPlayerInfo && !myPlayerInfo.hasPlayedInitial;
-
-        return needsInitialMeld && isMyTurn && (
-          <div className="p-3 bg-yellow-900/30 border-2 border-yellow-600 rounded-lg animate-pulse">
-            <div className="flex items-start gap-2">
-              <span className="text-yellow-400 text-lg">⚠️</span>
-              <div>
-                <p className="text-yellow-200 text-sm font-semibold">
-                  Initial Meld Required
-                </p>
-                <p className="text-yellow-300/80 text-xs mt-1">
-                  Play melds totaling 30+ points to start
-                </p>
-              </div>
-            </div>
+      {/* Timer and Pool info - side by side */}
+      <div className="grid grid-cols-2 gap-3">
+        {/* Timer */}
+        <div className="text-center p-3 bg-gray-700 rounded-lg">
+          <div className="text-gray-400 text-xs mb-1">Time</div>
+          <div
+            className={`
+              text-2xl font-bold font-mono
+              ${timeRemaining < 30 ? 'text-red-500 animate-pulse' : 'text-white'}
+            `}
+          >
+            {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
           </div>
-        );
-      })()}
+        </div>
 
-      {/* Pool info */}
-      <div className="text-center p-3 bg-gray-700 rounded-lg">
-        <div className="text-gray-400 text-sm">Tiles in Pool</div>
-        <div className="text-2xl font-bold text-amber-400">{poolSize}</div>
+        {/* Pool info */}
+        <div className="text-center p-3 bg-gray-700 rounded-lg">
+          <div className="text-gray-400 text-xs mb-1">Pool</div>
+          <div className="text-2xl font-bold text-amber-400">{poolSize}</div>
+        </div>
       </div>
 
       {/* Action buttons */}
