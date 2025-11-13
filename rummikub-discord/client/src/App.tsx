@@ -56,6 +56,7 @@ function App() {
   const [hasInitialized, setHasInitialized] = useState(false);
   const [turnError, setTurnError] = useState<string | null>(null);
   const isSyncing = useRef(false);
+  const isHandlingTimeout = useRef(false);
 
   // useEffect(() => {
   //   // Grab the Discord proxy ticket from the URL
@@ -172,6 +173,13 @@ function App() {
   const handleTimeExpired = useCallback(async () => {
     if (!channelId || !myPlayerId) return;
 
+    // Prevent multiple simultaneous timeout handlers
+    if (isHandlingTimeout.current) {
+      console.log('⏰ Already handling timeout, skipping...');
+      return;
+    }
+
+    isHandlingTimeout.current = true;
     console.log('⏰ Time expired - undoing turn and ending');
 
     // Undo the turn first (return tiles to hand)
@@ -189,6 +197,11 @@ function App() {
         console.error('Failed to end turn:', e);
       }
     }
+
+    // Reset the flag after a delay to allow state to update
+    setTimeout(() => {
+      isHandlingTimeout.current = false;
+    }, 1000);
   }, [channelId, myPlayerId, undoTurn, drawTile, endTurn]);
 
   // Turn timer countdown - now global for all players
@@ -399,54 +412,53 @@ function App() {
   return (
     <DndProvider backend={HTML5Backend}>
       <div className="h-screen bg-gradient-to-br from-gray-900 to-slate-800 p-2 overflow-hidden">
-        <div className="max-w-7xl mx-auto h-full flex flex-col">
-
-          {/* Main game area - takes remaining space */}
-          <div className="flex-1 flex gap-2 mb-2 overflow-hidden">
+        <div className="h-full flex gap-2">
+          {/* Left Column: Board + Hand stacked */}
+          <div className="flex-1 flex flex-col gap-2 overflow-hidden">
             {/* Game Board - takes remaining space */}
-            <div className="flex-1 flex items-center justify-center">
+            <div className="flex-1 flex items-center justify-center overflow-hidden">
               <GameBoard
                 tiles={board}
                 onTileDrop={handleTileDrop}
               />
             </div>
 
-            {/* Sidebar - fixed width */}
-            <div className="w-80 space-y-2 overflow-y-auto flex-shrink-0">
-              <GameControls
-                isMyTurn={!!isMyTurn}
-                canEndTurn={canEndTurn}
-                canUndo={canUndo}
-                canDraw={canDraw}
-                timeRemaining={turnTimeRemaining}
-                onDrawTile={handleDrawTile}
-                onEndTurn={handleEndTurn}
-                onUndo={handleUndoTurn}
-                onUndoLast={handleUndoLastAction}
-                onReset={async () => {
-                  if (channelId) {
-                    await resetGame(channelId);
-                    window.location.reload();
-                  }
-                }}
-                poolSize={pool.length}
-                players={players}
-                currentPlayerIndex={currentPlayerIndex}
-                myPlayerId={myPlayerId}
-              />
-
-              <PlayerList
-                players={players}
-                currentPlayerIndex={currentPlayerIndex}
-                myPlayerId={myPlayerId}
+            {/* Player Hand - fixed height at bottom */}
+            <div className="flex-shrink-0">
+              <PlayerHand
+                tiles={myHand.tiles}
               />
             </div>
           </div>
 
-          {/* Player Hand - fixed height at bottom */}
-          <div className="flex-shrink-0">
-            <PlayerHand
-              tiles={myHand.tiles}
+          {/* Right Column: Sidebar - full height */}
+          <div className="w-80 space-y-2 overflow-y-auto flex-shrink-0">
+            <GameControls
+              isMyTurn={!!isMyTurn}
+              canEndTurn={canEndTurn}
+              canUndo={canUndo}
+              canDraw={canDraw}
+              timeRemaining={turnTimeRemaining}
+              onDrawTile={handleDrawTile}
+              onEndTurn={handleEndTurn}
+              onUndo={handleUndoTurn}
+              onUndoLast={handleUndoLastAction}
+              onReset={async () => {
+                if (channelId) {
+                  await resetGame(channelId);
+                  window.location.reload();
+                }
+              }}
+              poolSize={pool.length}
+              players={players}
+              currentPlayerIndex={currentPlayerIndex}
+              myPlayerId={myPlayerId}
+            />
+
+            <PlayerList
+              players={players}
+              currentPlayerIndex={currentPlayerIndex}
+              myPlayerId={myPlayerId}
             />
           </div>
 

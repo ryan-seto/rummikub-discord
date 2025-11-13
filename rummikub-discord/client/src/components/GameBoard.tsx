@@ -25,8 +25,8 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
     const rawX = (offset.x - rect.left - PADDING + HOVER_OFFSET_X) / CELL_WIDTH;
     const rawY = (offset.y - rect.top - PADDING + HOVER_OFFSET_Y) / CELL_HEIGHT;
 
-    const snappedX = Math.max(0, Math.min(19, Math.floor(rawX)));
-    const snappedY = Math.max(0, Math.min(14, Math.floor(rawY)));
+    const snappedX = Math.max(0, Math.min(29, Math.floor(rawX)));
+    const snappedY = Math.max(0, Math.min(9, Math.floor(rawY)));
 
     return { x: snappedX, y: snappedY };
   }, [HOVER_OFFSET_X, HOVER_OFFSET_Y]);
@@ -103,11 +103,11 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
         style={{
           backgroundColor: '#8B6A31',
           display: 'grid',
-          gridTemplateColumns: 'repeat(20, 45px)',
-          gridTemplateRows: 'repeat(15, 54px)',
+          gridTemplateColumns: 'repeat(30, 45px)',
+          gridTemplateRows: 'repeat(10, 54px)',
           gap: 0,
-          width: '948px',  // 20 * 45px + 48px padding (24px * 2)
-          height: '858px', // 15 * 54px + 48px padding (24px * 2)
+          width: '1398px',  // 30 * 45px + 48px padding (24px * 2)
+          height: '588px', // 10 * 54px + 48px padding (24px * 2)
           maxWidth: '100%',
           maxHeight: '100%',
           transform: 'scale(1)',
@@ -115,9 +115,9 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
         }}
       >
       {/* DEBUG: Show grid cell borders */}
-      {Array.from({ length: 20 * 15 }).map((_, index) => {
-        const x = index % 20;
-        const y = Math.floor(index / 20);
+      {Array.from({ length: 30 * 10 }).map((_, index) => {
+        const x = index % 30;
+        const y = Math.floor(index / 30);
         const isDropTarget = dragPosition?.x === x && dragPosition?.y === y;
 
         return (
