@@ -20,8 +20,8 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
           const boardElement = document.getElementById('game-board');
           if (boardElement) {
             const rect = boardElement.getBoundingClientRect();
-            const CELL_WIDTH = 50;
-            const CELL_HEIGHT = 60;
+            const CELL_WIDTH = 45;
+            const CELL_HEIGHT = 54;
             const PADDING = 24;
 
             const rawX = (offset.x - rect.left - PADDING) / CELL_WIDTH;
@@ -48,9 +48,9 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
             console.log(`📏 Board rect: left=${rect.left.toFixed(1)}, top=${rect.top.toFixed(1)}, width=${rect.width.toFixed(1)}, height=${rect.height.toFixed(1)}`);
 
             // Calculate which grid cell the mouse is over
-            // Grid cells are 50px × 60px, with 24px padding
-            const CELL_WIDTH = 50;
-            const CELL_HEIGHT = 60;
+            // Grid cells are 45px × 54px, with 24px padding
+            const CELL_WIDTH = 45;
+            const CELL_HEIGHT = 54;
             const PADDING = 24;
 
             const rawX = (offset.x - rect.left - PADDING) / CELL_WIDTH;
@@ -103,11 +103,11 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
         style={{
           backgroundColor: '#8B6A31',
           display: 'grid',
-          gridTemplateColumns: 'repeat(20, 50px)',
-          gridTemplateRows: 'repeat(15, 60px)',
+          gridTemplateColumns: 'repeat(20, 45px)',
+          gridTemplateRows: 'repeat(15, 54px)',
           gap: 0,
-          width: '1048px',  // 20 * 50px + 48px padding (24px * 2)
-          height: '948px', // 15 * 60px + 48px padding (24px * 2)
+          width: '948px',  // 20 * 45px + 48px padding (24px * 2)
+          height: '858px', // 15 * 54px + 48px padding (24px * 2)
         }}
       >
       {/* Board title */}

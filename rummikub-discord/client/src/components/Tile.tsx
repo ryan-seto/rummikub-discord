@@ -28,9 +28,9 @@ export const Tile: React.FC<TileProps> = ({
   }), [tile, isDraggable, fromBoard]);
 
   const sizeClasses = {
-    small: 'w-10 h-12 text-sm',
-    medium: 'w-12 h-14 text-2xl',
-    large: 'w-16 h-20 text-3xl',
+    small: 'w-8 h-10 text-xs',
+    medium: 'w-10 h-12 text-xl',
+    large: 'w-12 h-14 text-2xl',
   };
 
   const colorClasses = {
