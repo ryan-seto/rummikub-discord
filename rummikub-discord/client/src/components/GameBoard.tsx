@@ -77,10 +77,9 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
           const boardElement = document.getElementById('game-board');
           if (boardElement) {
             const rect = boardElement.getBoundingClientRect();
-            // Account for padding (p-6 = 24px) - grid content starts inside padding
-            const BOARD_PADDING = 24;
-            const rawX = (offset.x - rect.left - BOARD_PADDING) / 70;
-            const rawY = (offset.y - rect.top - BOARD_PADDING) / 85;
+            // No padding offset needed with CSS Grid
+            const rawX = (offset.x - rect.left) / 60;
+            const rawY = (offset.y - rect.top) / 72;
 
             // Calculate which grid cell we're over
             const snappedPos = calculateSnapPosition(rawX, rawY, item.fromBoard ? item.tile.id : undefined, false);
@@ -99,10 +98,9 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
           const boardElement = document.getElementById('game-board');
           if (boardElement) {
             const rect = boardElement.getBoundingClientRect();
-            // Account for padding (p-6 = 24px) - grid content starts inside padding
-            const BOARD_PADDING = 24;
-            const rawX = (offset.x - rect.left - BOARD_PADDING) / 70;
-            const rawY = (offset.y - rect.top - BOARD_PADDING) / 85;
+            // No padding offset needed with CSS Grid
+            const rawX = (offset.x - rect.left) / 60;
+            const rawY = (offset.y - rect.top) / 72;
 
             console.log(`🔢 Raw position: (${rawX.toFixed(2)}, ${rawY.toFixed(2)})`);
 
@@ -148,11 +146,11 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
         style={{
           backgroundColor: '#8B6A31',
           display: 'grid',
-          gridTemplateColumns: 'repeat(20, 70px)',
-          gridTemplateRows: 'repeat(15, 85px)',
+          gridTemplateColumns: 'repeat(20, 60px)',
+          gridTemplateRows: 'repeat(15, 72px)',
           gap: 0,
-          width: '1400px',  // 20 * 70px
-          height: '1275px', // 15 * 85px
+          width: '1200px',  // 20 * 60px
+          height: '1080px', // 15 * 72px
         }}
       >
       {/* Board title */}
