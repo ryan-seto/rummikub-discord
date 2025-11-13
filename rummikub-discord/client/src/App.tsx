@@ -386,12 +386,13 @@ function App() {
   // Playing phase
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-slate-800 p-4">
-        <div className="max-w-7xl mx-auto">
+      <div className="h-screen bg-gradient-to-br from-gray-900 to-slate-800 p-2 overflow-hidden">
+        <div className="max-w-7xl mx-auto h-full flex flex-col">
 
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-4">
+          {/* Main game area - takes remaining space */}
+          <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-2 mb-2 overflow-hidden">
             {/* Game Board */}
-            <div className="lg:col-span-3 min-h-[600px]">
+            <div className="lg:col-span-3 flex items-center justify-center">
               <GameBoard
                 tiles={board}
                 onTileDrop={handleTileDrop}
@@ -399,7 +400,7 @@ function App() {
             </div>
 
             {/* Sidebar */}
-            <div className="space-y-4">
+            <div className="space-y-2 overflow-y-auto">
               <GameControls
                 isMyTurn={!!isMyTurn}
                 canEndTurn={canEndTurn}
@@ -430,10 +431,12 @@ function App() {
             </div>
           </div>
 
-          {/* Player Hand */}
-          <PlayerHand
-            tiles={myHand.tiles}
-          />
+          {/* Player Hand - fixed height at bottom */}
+          <div className="flex-shrink-0">
+            <PlayerHand
+              tiles={myHand.tiles}
+            />
+          </div>
 
           {/* Turn Error Display */}
           {turnError && (

@@ -110,11 +110,6 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
           height: '858px', // 15 * 54px + 48px padding (24px * 2)
         }}
       >
-      {/* Board title */}
-      <div className="absolute top-2 left-2 text-white/60 text-sm font-semibold z-30">
-        Game Board
-      </div>
-
       {/* DEBUG: Show grid cell borders */}
       {Array.from({ length: 20 * 15 }).map((_, index) => {
         const x = index % 20;
@@ -153,23 +148,6 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
           </div>
         );
       })}
-
-      {/* Empty board message */}
-      {tiles.length === 0 && (
-        <div
-          className="flex items-center justify-center text-white/60 text-center z-20"
-          style={{
-            gridColumn: '1 / -1',
-            gridRow: '1 / -1',
-            pointerEvents: 'none',
-          }}
-        >
-          <div>
-            <p className="text-2xl font-semibold mb-2">Board is empty</p>
-            <p className="text-lg">Drag tiles here to form melds</p>
-          </div>
-        </div>
-      )}
 
       {/* Tiles on board - positioned in grid cells */}
       {tiles.map((tile) => (
