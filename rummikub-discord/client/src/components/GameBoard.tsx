@@ -102,89 +102,89 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
           gridTemplateColumns: 'repeat(20, 45px)',
           gridTemplateRows: 'repeat(15, 54px)',
           gap: 0,
-          width: '948px',  // 20 * 45px + 48px padding (24px * 2)
-          height: '858px', // 15 * 54px + 48px padding (24px * 2)
+          width: '1048px',
+          height: '948px',
         }}
       >
-      {/* Board title */}
-      <div className="absolute top-2 left-2 text-white/60 text-sm font-semibold z-30">
-        Game Board
-      </div>
+        {/* Board title */}
+        <div className="absolute top-2 left-2 text-white/60 text-sm font-semibold z-30">
+          Game Board
+        </div>
 
-      {/* DEBUG: Show grid cell borders */}
-      {Array.from({ length: 20 * 15 }).map((_, index) => {
-        const x = index % 20;
-        const y = Math.floor(index / 20);
-        const isDropTarget = dragPosition?.x === x && dragPosition?.y === y;
+        {/* DEBUG: Show grid cell borders */}
+        {Array.from({ length: 20 * 15 }).map((_, index) => {
+          const x = index % 20;
+          const y = Math.floor(index / 20);
+          const isDropTarget = dragPosition?.x === x && dragPosition?.y === y;
 
-        return (
+          return (
+            <div
+              key={`cell-${x}-${y}`}
+              className="relative"
+              style={{
+                gridColumn: x + 1,
+                gridRow: y + 1,
+                border: '1px solid rgba(255, 255, 255, 0.05)',
+              }}
+            >
+              {/* Drop zone highlight */}
+              {isDropTarget && (
+                <div
+                  className="absolute inset-0 pointer-events-none z-20 rounded-lg animate-pulse"
+                  style={{
+                    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                    border: '2px solid rgba(255, 255, 255, 0.8)',
+                    boxShadow: '0 0 20px rgba(255, 255, 255, 0.6)',
+                  }}
+                >
+                  <div className="text-white text-xs font-bold p-1">
+                    ({x}, {y})
+                  </div>
+                </div>
+              )}
+              {/* Cell coordinate label for debugging */}
+              <div className="absolute top-0 left-0 text-white/20 text-xs pointer-events-none">
+                {x},{y}
+              </div>
+            </div>
+          );
+        })}
+
+        {/* Empty board message */}
+        {tiles.length === 0 && (
           <div
-            key={`cell-${x}-${y}`}
-            className="relative"
+            className="flex items-center justify-center text-white/60 text-center z-20"
             style={{
-              gridColumn: x + 1,
-              gridRow: y + 1,
-              border: '1px solid rgba(255, 255, 255, 0.05)',
+              gridColumn: '1 / -1',
+              gridRow: '1 / -1',
+              pointerEvents: 'none',
             }}
           >
-            {/* Drop zone highlight */}
-            {isDropTarget && (
-              <div
-                className="absolute inset-0 pointer-events-none z-20 rounded-lg animate-pulse"
-                style={{
-                  backgroundColor: 'rgba(255, 255, 255, 0.3)',
-                  border: '2px solid rgba(255, 255, 255, 0.8)',
-                  boxShadow: '0 0 20px rgba(255, 255, 255, 0.6)',
-                }}
-              >
-                <div className="text-white text-xs font-bold p-1">
-                  ({x}, {y})
-                </div>
-              </div>
-            )}
-            {/* Cell coordinate label for debugging */}
-            <div className="absolute top-0 left-0 text-white/20 text-xs pointer-events-none">
-              {x},{y}
+            <div>
+              <p className="text-2xl font-semibold mb-2">Board is empty</p>
+              <p className="text-lg">Drag tiles here to form melds</p>
             </div>
           </div>
-        );
-      })}
+        )}
 
-      {/* Empty board message */}
-      {tiles.length === 0 && (
-        <div
-          className="flex items-center justify-center text-white/60 text-center z-20"
-          style={{
-            gridColumn: '1 / -1',
-            gridRow: '1 / -1',
-            pointerEvents: 'none',
-          }}
-        >
-          <div>
-            <p className="text-2xl font-semibold mb-2">Board is empty</p>
-            <p className="text-lg">Drag tiles here to form melds</p>
+        {/* Tiles on board - positioned in grid cells */}
+        {tiles.map((tile) => (
+          <div
+            key={tile.id}
+            className="flex items-center justify-center z-10"
+            style={{
+              gridColumn: tile.position.x + 1,
+              gridRow: tile.position.y + 1,
+            }}
+            title={`Position: (${tile.position.x}, ${tile.position.y})`}
+          >
+            <Tile
+              tile={tile}
+              isDraggable={true}
+              fromBoard={true}
+            />
           </div>
-        </div>
-      )}
-
-      {/* Tiles on board - positioned in grid cells */}
-      {tiles.map((tile) => (
-        <div
-          key={tile.id}
-          className="flex items-center justify-center z-10"
-          style={{
-            gridColumn: tile.position.x + 1,
-            gridRow: tile.position.y + 1,
-          }}
-          title={`Position: (${tile.position.x}, ${tile.position.y})`}
-        >
-          <Tile
-            tile={tile}
-            isDraggable={true}
-            fromBoard={true}
-          />
-        </div>
-      ))}
+        ))}
       </div>
     </div>
   );
