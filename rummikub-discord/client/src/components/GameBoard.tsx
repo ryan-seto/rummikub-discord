@@ -175,7 +175,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
       {tiles.map((tile) => (
         <div
           key={tile.id}
-          className="flex items-center justify-center z-10"
+          className="flex items-center justify-center z-30"
           style={{
             gridColumn: tile.position.x + 1,
             gridRow: tile.position.y + 1,
