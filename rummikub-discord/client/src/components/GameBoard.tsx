@@ -18,7 +18,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
   const PADDING = 24;
 
   // Hover offset tweaking - adjust these to perfect the alignment
-  const HOVER_OFFSET_X = 55;  // Positive = shift right, Negative = shift left
+  const HOVER_OFFSET_X = 40;  // Positive = shift right, Negative = shift left
   const HOVER_OFFSET_Y = 0;  // Positive = shift down, Negative = shift up
 
   const calculateGridPosition = React.useCallback((offset: { x: number; y: number }, rect: DOMRect) => {
