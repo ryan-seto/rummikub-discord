@@ -4,13 +4,17 @@ import { Player } from '../types/game';
 interface LobbyProps {
   players: Player[];
   onStartGame: () => void;
+  onToggleReady?: (playerId: string) => void;
+  myPlayerId?: string | null;
   minPlayers?: number;
   maxPlayers?: number;
 }
 
-export const Lobby: React.FC<LobbyProps> = ({ 
-  players, 
+export const Lobby: React.FC<LobbyProps> = ({
+  players,
   onStartGame,
+  onToggleReady,
+  myPlayerId,
   minPlayers = 2,
   maxPlayers = 4,
 }) => {
@@ -55,38 +59,60 @@ export const Lobby: React.FC<LobbyProps> = ({
             </div>
           ) : (
             <div className="space-y-3">
-              {players.map((player, index) => (
-                <div
-                  key={player.id}
-                  className="flex items-center gap-3 p-3 bg-gray-600 rounded-lg"
-                >
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-white font-bold text-lg">
-                    {player.avatar ? (
-                      <img
-                        src={`https://cdn.discordapp.com/avatars/${player.id}/${player.avatar}.png`}
-                        alt={player.username}
-                        className="w-full h-full rounded-full"
-                      />
+              {players.map((player, index) => {
+                const isMe = player.id === myPlayerId;
+
+                return (
+                  <div
+                    key={player.id}
+                    className={`flex items-center gap-3 p-3 rounded-lg ${
+                      isMe ? 'bg-blue-900/30 border-2 border-blue-400' : 'bg-gray-600'
+                    }`}
+                  >
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-white font-bold text-lg">
+                      {player.avatar ? (
+                        <img
+                          src={`https://cdn.discordapp.com/avatars/${player.id}/${player.avatar}.png`}
+                          alt={player.username}
+                          className="w-full h-full rounded-full"
+                        />
+                      ) : (
+                        player.username.charAt(0).toUpperCase()
+                      )}
+                    </div>
+
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="text-white font-semibold">{player.username}</p>
+                        {isMe && <span className="text-xs text-blue-300">(You)</span>}
+                      </div>
+                      <p className="text-gray-400 text-sm">
+                        Player {index + 1}
+                      </p>
+                    </div>
+
+                    {/* Ready checkbox for current player, status for others */}
+                    {isMe && onToggleReady ? (
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={player.isReady}
+                          onChange={() => onToggleReady(player.id)}
+                          className="w-5 h-5 rounded border-gray-400 text-green-500 focus:ring-2 focus:ring-green-400 cursor-pointer"
+                        />
+                        <span className="text-white text-sm font-semibold">Ready</span>
+                      </label>
+                    ) : player.isReady ? (
+                      <div className="text-green-400 font-semibold flex items-center gap-1">
+                        <span>✓</span>
+                        <span className="text-sm">Ready</span>
+                      </div>
                     ) : (
-                      player.username.charAt(0).toUpperCase()
+                      <span className="text-gray-400 text-sm">Not ready</span>
                     )}
                   </div>
-                  
-                  <div className="flex-1">
-                    <p className="text-white font-semibold">{player.username}</p>
-                    <p className="text-gray-400 text-sm">
-                      Player {index + 1}
-                    </p>
-                  </div>
-
-                  {player.isReady && (
-                    <div className="text-green-400 font-semibold flex items-center gap-1">
-                      <span>✓</span>
-                      <span className="text-sm">Ready</span>
-                    </div>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

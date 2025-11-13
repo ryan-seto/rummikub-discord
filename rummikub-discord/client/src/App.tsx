@@ -368,12 +368,24 @@ function App() {
     );
   }
 
+  const handleToggleReady = (playerId: string) => {
+    // Toggle ready state in the game store
+    const player = players.find(p => p.id === playerId);
+    if (player) {
+      // You'll need to add a toggleReady action in your game store
+      // For now, this is a placeholder
+      console.log('Toggle ready for player:', playerId);
+    }
+  };
+
   // Lobby phase
   if (phase === GamePhase.LOBBY) {
     return (
       <Lobby
         players={players}
         onStartGame={handleStartGame}
+        onToggleReady={handleToggleReady}
+        myPlayerId={myPlayerId}
       />
     );
   }
@@ -390,17 +402,17 @@ function App() {
         <div className="max-w-7xl mx-auto h-full flex flex-col">
 
           {/* Main game area - takes remaining space */}
-          <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-2 mb-2 overflow-hidden">
-            {/* Game Board */}
-            <div className="lg:col-span-3 flex items-center justify-center">
+          <div className="flex-1 flex gap-2 mb-2 overflow-hidden">
+            {/* Game Board - takes remaining space */}
+            <div className="flex-1 flex items-center justify-center">
               <GameBoard
                 tiles={board}
                 onTileDrop={handleTileDrop}
               />
             </div>
 
-            {/* Sidebar */}
-            <div className="space-y-2 overflow-y-auto">
+            {/* Sidebar - fixed width */}
+            <div className="w-80 space-y-2 overflow-y-auto flex-shrink-0">
               <GameControls
                 isMyTurn={!!isMyTurn}
                 canEndTurn={canEndTurn}

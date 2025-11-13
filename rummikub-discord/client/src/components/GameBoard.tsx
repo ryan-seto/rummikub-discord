@@ -108,6 +108,10 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
           gap: 0,
           width: '948px',  // 20 * 45px + 48px padding (24px * 2)
           height: '858px', // 15 * 54px + 48px padding (24px * 2)
+          maxWidth: '100%',
+          maxHeight: '100%',
+          transform: 'scale(1)',
+          transformOrigin: 'center',
         }}
       >
       {/* DEBUG: Show grid cell borders */}
