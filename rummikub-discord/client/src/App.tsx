@@ -12,6 +12,7 @@ import { GameControls } from './components/GameControls';
 import { GamePhase, Player, Tile } from './types/game';
 import { useSocket } from './hooks/useSocket';
 import { WinnerScreen } from './components/WinnerScreen';
+import { CustomDragLayer } from './components/CustomDragLayer';
 
 function App() {
   const { user, participants, isReady, error, channelId } = useDiscordSDK();
@@ -386,6 +387,7 @@ function App() {
   // Playing phase
   return (
     <DndProvider backend={HTML5Backend}>
+      <CustomDragLayer />
       <div className="min-h-screen bg-gradient-to-br from-gray-900 to-slate-800 p-4">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
