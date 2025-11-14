@@ -435,7 +435,7 @@ app.post('/api/games/:gameId/players/:playerId/ready', (req: Request, res: Respo
   console.log(`✓ Player ${playerId} ready status: ${player.isReady}`);
 
   // Broadcast updated state to all clients in this channel
-  io.to(gameId).emit('gameStateUpdate', {
+  io.to(gameId).emit('game-state-update', {
     players: game.players,
   });
 
