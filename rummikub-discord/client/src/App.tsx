@@ -256,15 +256,11 @@ function App() {
     try {
       console.log('🎴 Drawing tile');
 
-      // Trigger animation with a placeholder tile (unique ID ensures re-trigger)
-      setDrawingTile({
-        id: `temp-${Date.now()}`,
-        number: 0,
-        color: null,
-        isJoker: false,
-      });
+      // Draw the tile from server first
+      const drawnTile = await drawTile(channelId, myPlayerId);
 
-      await drawTile(channelId, myPlayerId);
+      // Trigger animation with the actual tile drawn
+      setDrawingTile(drawnTile);
     } catch (error: any) {
       console.error('❌ Draw failed:', error);
       setDrawingTile(null); // Clear animation on error

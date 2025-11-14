@@ -16,7 +16,7 @@ interface GameStore extends GameState {
   initializeGame: (channelId: string, players: Player[]) => Promise<void>;
   fetchMyHand: (channelId: string, playerId: string) => Promise<void>;
   startGame: (channelId: string) => Promise<void>;
-  drawTile: (channelId: string, playerId: string) => Promise<void>;
+  drawTile: (channelId: string, playerId: string) => Promise<Tile>;
   placeTile: (channelId: string, playerId: string, tile: Tile, position: { x: number; y: number }, setId: string) => Promise<void>;
   moveTile: (channelId: string, tileId: string, position: { x: number; y: number }, setId: string) => Promise<void>;
   endTurn: (channelId: string, playerId?: string) => Promise<void>;  // ← Add playerId param
@@ -140,6 +140,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
       set({ myHand: { tiles: [...myHand.tiles, data.tile] } });
       console.log('✅ Tile drawn');
+      return data.tile;
     } catch (error: any) {
       console.error('❌ Failed to draw tile:', error.message);
       throw error;

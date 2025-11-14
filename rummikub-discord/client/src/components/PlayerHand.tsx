@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { Tile } from './Tile';
 import { Tile as TileType } from '../types/game';
 import { sortHandByColor, sortHandByNumber } from '../game/logic';
@@ -12,27 +12,6 @@ type SortMode = 'color' | 'number';
 
 export const PlayerHand: React.FC<PlayerHandProps> = ({ tiles, onTileClick }) => {
   const [sortMode, setSortMode] = useState<SortMode>('color');
-  const [newTileIds, setNewTileIds] = useState<Set<string>>(new Set());
-  const previousTileCount = useRef(tiles.length);
-
-  // Detect newly added tiles
-  useEffect(() => {
-    if (tiles.length > previousTileCount.current) {
-      // Find the new tile(s) by comparing with previous tiles
-      const previousIds = new Set(tiles.slice(0, previousTileCount.current).map(t => t.id));
-      const newIds = tiles.filter(t => !previousIds.has(t.id)).map(t => t.id);
-
-      setNewTileIds(new Set(newIds));
-
-      // Remove the highlight after animation completes
-      const timer = setTimeout(() => {
-        setNewTileIds(new Set());
-      }, 600);
-
-      return () => clearTimeout(timer);
-    }
-    previousTileCount.current = tiles.length;
-  }, [tiles]);
 
   const sortedTiles = sortMode === 'color'
     ? sortHandByColor(tiles)
@@ -76,15 +55,11 @@ export const PlayerHand: React.FC<PlayerHandProps> = ({ tiles, onTileClick }) =>
           </div>
         ) : (
           sortedTiles.map((tile) => (
-            <div
+            <Tile
               key={tile.id}
-              className={`${newTileIds.has(tile.id) ? 'animate-landing-glow' : ''}`}
-            >
-              <Tile
-                tile={tile}
-                isDraggable={true}
-              />
-            </div>
+              tile={tile}
+              isDraggable={true}
+            />
           ))
         )}
       </div>
