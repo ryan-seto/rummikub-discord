@@ -6,13 +6,14 @@ import { useDiscordSDK } from './hooks/useDiscordSDK';
 import { useGameStore } from './store/gameStore';
 import { Lobby } from './components/Lobby';
 import { GameBoard } from './components/GameBoard';
-import { PlayerHand } from './components/PlayerHand';
+import { PlayerHand, PlayerHandRef } from './components/PlayerHand';
 import { PlayerList } from './components/PlayerList';
 import { GameControls } from './components/GameControls';
 import { TileDrawAnimation } from './components/TileDrawAnimation';
 import { GamePhase, Player, Tile } from './types/game';
 import { useSocket } from './hooks/useSocket';
 import { WinnerScreen } from './components/WinnerScreen';
+import { sortHandByColor, sortHandByNumber } from './game/logic';
 
 function App() {
   const { user, participants, isReady, error, channelId } = useDiscordSDK();
@@ -58,6 +59,8 @@ function App() {
   const [hasInitialized, setHasInitialized] = useState(false);
   const [turnError, setTurnError] = useState<string | null>(null);
   const [drawingTile, setDrawingTile] = useState<Tile | null>(null);
+  const [animationTargetPos, setAnimationTargetPos] = useState<{ x: number; y: number } | null>(null);
+  const playerHandRef = useRef<PlayerHandRef>(null);
   const isSyncing = useRef(false);
   const isHandlingTimeout = useRef(false);
 
@@ -259,11 +262,45 @@ function App() {
       // Draw the tile from server first
       const drawnTile = await drawTile(channelId, myPlayerId);
 
+      // Calculate where the tile will end up in the sorted hand
+      const sortMode = playerHandRef.current?.getSortMode() || 'color';
+      const currentTiles = [...myHand.tiles, drawnTile];
+      const sortedTiles = sortMode === 'color'
+        ? sortHandByColor(currentTiles)
+        : sortHandByNumber(currentTiles);
+
+      // Find the index of the drawn tile in the sorted array
+      const tileIndex = sortedTiles.findIndex(t => t.id === drawnTile.id);
+
+      // Calculate pixel position based on flex layout
+      // PlayerHand: width 1173px, padding 16px (4 * 4px), gap 6px (1.5 * 4px)
+      // Tiles: width 40px (w-10), height 48px (h-12)
+      const containerElement = playerHandRef.current?.getContainerElement();
+      if (containerElement && tileIndex >= 0) {
+        const containerRect = containerElement.getBoundingClientRect();
+
+        // Calculate position in flex wrap layout
+        const tileWidth = 40; // w-10 = 40px
+        const gap = 6; // gap-1.5 = 6px
+        const padding = 16; // px-4 = 16px
+
+        // Approximate position (flex-wrap makes this complex, but we can estimate)
+        const tilesPerRow = Math.floor((1173 - 2 * padding) / (tileWidth + gap));
+        const row = Math.floor(tileIndex / tilesPerRow);
+        const col = tileIndex % tilesPerRow;
+
+        const x = containerRect.left + padding + col * (tileWidth + gap);
+        const y = window.innerHeight - containerRect.bottom + padding + row * (48 + gap);
+
+        setAnimationTargetPos({ x, y });
+      }
+
       // Trigger animation with the actual tile drawn
       setDrawingTile(drawnTile);
     } catch (error: any) {
       console.error('❌ Draw failed:', error);
       setDrawingTile(null); // Clear animation on error
+      setAnimationTargetPos(null);
       // Show error if pool is empty
       if (error.message.includes('pool')) {
         setTurnError('No tiles left to draw!');
@@ -430,6 +467,7 @@ function App() {
           {/* Player Hand - fixed at bottom */}
           <div className="flex-shrink-0">
             <PlayerHand
+              ref={playerHandRef}
               tiles={myHand.tiles}
             />
           </div>
@@ -476,7 +514,11 @@ function App() {
         {/* Tile Draw Animation */}
         <TileDrawAnimation
           tile={drawingTile}
-          onComplete={() => setDrawingTile(null)}
+          targetPosition={animationTargetPos}
+          onComplete={() => {
+            setDrawingTile(null);
+            setAnimationTargetPos(null);
+          }}
         />
       </div>
     </DndProvider>

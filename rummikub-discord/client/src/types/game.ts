@@ -66,6 +66,7 @@ export interface GameState {
   turnStartBoard: TileOnBoard[]; // Board state at start of turn (for undo)
   turnTimeRemaining: number; // Seconds remaining in current turn
   turnEndTime?: number; // Unix timestamp (ms) when current turn will end
+  turnTimerDuration: number; // Configured turn duration in seconds (default 60)
 }
 
 export interface GameAction {

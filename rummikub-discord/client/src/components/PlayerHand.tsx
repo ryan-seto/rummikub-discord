@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useImperativeHandle, forwardRef } from 'react';
 import { Tile } from './Tile';
 import { Tile as TileType } from '../types/game';
 import { sortHandByColor, sortHandByNumber } from '../game/logic';
@@ -8,10 +8,21 @@ interface PlayerHandProps {
   onTileClick?: (tile: TileType) => void;
 }
 
-type SortMode = 'color' | 'number';
+export type SortMode = 'color' | 'number';
 
-export const PlayerHand: React.FC<PlayerHandProps> = ({ tiles, onTileClick }) => {
+export interface PlayerHandRef {
+  getSortMode: () => SortMode;
+  getContainerElement: () => HTMLDivElement | null;
+}
+
+export const PlayerHand = forwardRef<PlayerHandRef, PlayerHandProps>(({ tiles, onTileClick }, ref) => {
   const [sortMode, setSortMode] = useState<SortMode>('color');
+  const containerRef = React.useRef<HTMLDivElement>(null);
+
+  useImperativeHandle(ref, () => ({
+    getSortMode: () => sortMode,
+    getContainerElement: () => containerRef.current,
+  }));
 
   const sortedTiles = sortMode === 'color'
     ? sortHandByColor(tiles)
@@ -48,7 +59,7 @@ export const PlayerHand: React.FC<PlayerHandProps> = ({ tiles, onTileClick }) =>
           </button>
         </div>
       </div>
-      <div className="flex flex-wrap gap-1.5 justify-center px-4 py-3" style={{ minHeight: '136px', maxHeight: '136px' }}>
+      <div ref={containerRef} className="flex flex-wrap gap-1.5 justify-center px-4 py-3" style={{ minHeight: '136px', maxHeight: '136px' }}>
         {sortedTiles.length === 0 ? (
           <div className="text-amber-200 text-center py-4 w-full text-sm">
             No tiles
@@ -65,4 +76,4 @@ export const PlayerHand: React.FC<PlayerHandProps> = ({ tiles, onTileClick }) =>
       </div>
     </div>
   );
-};
+});

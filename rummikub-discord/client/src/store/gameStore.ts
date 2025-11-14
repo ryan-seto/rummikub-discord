@@ -40,6 +40,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   pool: [],
   turnStartBoard: [],
   turnTimeRemaining: 0, // Will be calculated from turnEndTime
+  turnTimerDuration: 60, // Default 60 seconds, will be updated from server
   myPlayerId: null,
   myHand: { tiles: [] },
   canDraw: true,
