@@ -18,6 +18,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
   const PADDING = 24;
 
   // Hover offset tweaking - adjust these to perfect the alignment
+  // Since the drag preview is centered on cursor, we want to snap to the cell the cursor is over
   const HOVER_OFFSET_X = 0;  // Positive = shift right, Negative = shift left
   const HOVER_OFFSET_Y = 0;  // Positive = shift down, Negative = shift up
 
@@ -118,7 +119,6 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
       {Array.from({ length: 25 * 10 }).map((_, index) => {
         const x = index % 25;
         const y = Math.floor(index / 25);
-        const isDropTarget = dragPosition?.x === x && dragPosition?.y === y;
 
         return (
           <div
@@ -130,21 +130,6 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
               border: '1px solid rgba(255, 255, 255, 0.05)',
             }}
           >
-            {/* Drop zone highlight */}
-            {isDropTarget && (
-              <div
-                className="absolute inset-0 pointer-events-none z-20 rounded-lg animate-pulse"
-                style={{
-                  backgroundColor: 'rgba(255, 255, 255, 0.3)',
-                  border: '2px solid rgba(255, 255, 255, 0.8)',
-                  boxShadow: '0 0 20px rgba(255, 255, 255, 0.6)',
-                }}
-              >
-                <div className="text-white text-xs font-bold p-1">
-                  ({x}, {y})
-                </div>
-              </div>
-            )}
             {/* Cell coordinate label for debugging */}
             <div className="absolute top-0 left-0 text-white/20 text-xs pointer-events-none">
               {x},{y}
@@ -152,6 +137,27 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
           </div>
         );
       })}
+
+      {/* Smooth floating drop zone highlight - positioned absolutely */}
+      {dragPosition && (
+        <div
+          className="absolute pointer-events-none z-20 rounded-lg animate-pulse"
+          style={{
+            left: `${dragPosition.x * CELL_WIDTH}px`,
+            top: `${dragPosition.y * CELL_HEIGHT}px`,
+            width: `${CELL_WIDTH}px`,
+            height: `${CELL_HEIGHT}px`,
+            backgroundColor: 'rgba(255, 255, 255, 0.3)',
+            border: '2px solid rgba(255, 255, 255, 0.8)',
+            boxShadow: '0 0 20px rgba(255, 255, 255, 0.6)',
+            transition: 'left 120ms cubic-bezier(0.4, 0, 0.2, 1), top 120ms cubic-bezier(0.4, 0, 0.2, 1)',
+          }}
+        >
+          <div className="text-white text-xs font-bold p-1">
+            ({dragPosition.x}, {dragPosition.y})
+          </div>
+        </div>
+      )}
 
       {/* Tiles on board - positioned in grid cells */}
       {tiles.map((tile) => (

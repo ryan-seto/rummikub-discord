@@ -20,7 +20,8 @@ function getItemStyles(currentOffset: { x: number; y: number } | null) {
   }
 
   const { x, y } = currentOffset;
-  const transform = `translate(${x}px, ${y}px)`;
+  // Center the tile on the cursor (tile is 40px wide, 48px tall)
+  const transform = `translate(${x - 20}px, ${y - 24}px)`;
 
   return {
     transform,
