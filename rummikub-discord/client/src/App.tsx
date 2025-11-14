@@ -408,9 +408,9 @@ function App() {
   // Playing phase
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="h-screen bg-gradient-to-br from-gray-900 to-slate-800 overflow-hidden flex">
+      <div className="h-screen bg-gradient-to-br from-gray-900 to-slate-800 overflow-hidden flex p-3 gap-3">
         {/* Left Column: Board + Hand stacked - fills remaining space */}
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col gap-3 overflow-hidden">
           {/* Game Board - takes remaining space */}
           <div className="flex-1 flex items-center justify-center overflow-hidden">
             <GameBoard
@@ -419,7 +419,7 @@ function App() {
             />
           </div>
 
-          {/* Player Hand - fixed at bottom, flush with edges */}
+          {/* Player Hand - fixed at bottom */}
           <div className="flex-shrink-0">
             <PlayerHand
               tiles={myHand.tiles}
@@ -427,8 +427,8 @@ function App() {
           </div>
         </div>
 
-        {/* Right Column: Sidebar - full height, flush with right edge */}
-        <div className="w-80 space-y-2 overflow-y-auto flex-shrink-0 p-2 bg-gray-900/50">
+        {/* Right Column: Sidebar - full height */}
+        <div className="w-80 space-y-2 overflow-y-auto flex-shrink-0">
           <GameControls
             isMyTurn={!!isMyTurn}
             canEndTurn={canEndTurn}

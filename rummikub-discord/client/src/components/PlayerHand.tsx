@@ -18,8 +18,8 @@ export const PlayerHand: React.FC<PlayerHandProps> = ({ tiles, onTileClick }) =>
     : sortHandByNumber(tiles);
 
   return (
-    <div className="w-full bg-amber-900 shadow-2xl">
-      <div className="flex items-center justify-between px-3 py-1.5 border-b border-amber-800">
+    <div className="bg-amber-900 rounded-xl shadow-2xl" style={{ width: '1173px', flexShrink: 0 }}>
+      <div className="flex items-center justify-between px-4 py-1.5 border-b border-amber-800">
         <span className="text-amber-200 text-sm font-semibold">Your Hand</span>
         <div className="flex gap-1">
           <button
@@ -48,7 +48,7 @@ export const PlayerHand: React.FC<PlayerHandProps> = ({ tiles, onTileClick }) =>
           </button>
         </div>
       </div>
-      <div className="flex flex-wrap gap-1.5 justify-center px-3 py-2.5" style={{ minHeight: '136px', maxHeight: '136px' }}>
+      <div className="flex flex-wrap gap-1.5 justify-center px-4 py-3" style={{ minHeight: '136px', maxHeight: '136px' }}>
         {sortedTiles.length === 0 ? (
           <div className="text-amber-200 text-center py-4 w-full text-sm">
             No tiles

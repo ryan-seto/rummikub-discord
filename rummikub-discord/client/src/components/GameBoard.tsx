@@ -90,7 +90,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
 
   return (
     <div
-      className="w-full h-full flex items-center justify-center overflow-hidden"
+      className="w-full h-full flex items-center justify-start overflow-hidden"
     >
       <div
         id="game-board"
@@ -109,10 +109,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
           gap: 0,
           width: '1173px',  // 25 * 45px + 48px padding (24px * 2)
           height: '588px', // 10 * 54px + 48px padding (24px * 2)
-          maxWidth: '100%',
-          maxHeight: '100%',
-          transform: 'scale(1)',
-          transformOrigin: 'center',
+          flexShrink: 0,
         }}
       >
       {/* DEBUG: Show grid cell borders */}
@@ -141,7 +138,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
       {/* Smooth floating drop zone highlight - positioned absolutely */}
       {dragPosition && (
         <div
-          className="absolute pointer-events-none z-20 rounded-lg animate-pulse"
+          className="absolute pointer-events-none z-20 rounded-lg"
           style={{
             left: `${PADDING + dragPosition.x * CELL_WIDTH}px`,
             top: `${PADDING + dragPosition.y * CELL_HEIGHT}px`,
@@ -149,7 +146,6 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
             height: `${CELL_HEIGHT}px`,
             backgroundColor: 'rgba(255, 255, 255, 0.3)',
             border: '2px solid rgba(255, 255, 255, 0.8)',
-            boxShadow: '0 0 20px rgba(255, 255, 255, 0.6)',
             transition: 'left 25ms cubic-bezier(0.4, 0, 0.2, 1), top 25ms cubic-bezier(0.4, 0, 0.2, 1)',
           }}
         >
