@@ -143,14 +143,14 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
         <div
           className="absolute pointer-events-none z-20 rounded-lg animate-pulse"
           style={{
-            left: `${dragPosition.x * CELL_WIDTH}px`,
-            top: `${dragPosition.y * CELL_HEIGHT}px`,
+            left: `${PADDING + dragPosition.x * CELL_WIDTH}px`,
+            top: `${PADDING + dragPosition.y * CELL_HEIGHT}px`,
             width: `${CELL_WIDTH}px`,
             height: `${CELL_HEIGHT}px`,
             backgroundColor: 'rgba(255, 255, 255, 0.3)',
             border: '2px solid rgba(255, 255, 255, 0.8)',
             boxShadow: '0 0 20px rgba(255, 255, 255, 0.6)',
-            transition: 'left 120ms cubic-bezier(0.4, 0, 0.2, 1), top 120ms cubic-bezier(0.4, 0, 0.2, 1)',
+            transition: 'left 50ms cubic-bezier(0.4, 0, 0.2, 1), top 50ms cubic-bezier(0.4, 0, 0.2, 1)',
           }}
         >
           <div className="text-white text-xs font-bold p-1">
