@@ -42,6 +42,7 @@ function App() {
     undoLastAction,
     resetGame,
     addPlayer,
+    toggleReady,
     syncGameState,
   } = useGameStore();
 
@@ -91,7 +92,7 @@ function App() {
         avatar: p.avatar,
         tilesCount: 0,
         hasPlayedInitial: false,
-        isReady: true,
+        isReady: false,
       }));
 
       // Add current user if not in participants
@@ -102,7 +103,7 @@ function App() {
           avatar: user.avatar,
           tilesCount: 0,
           hasPlayedInitial: false,
-          isReady: true,
+          isReady: false,
         });
       }
 
@@ -139,7 +140,7 @@ function App() {
             avatar: participant.avatar,
             tilesCount: 0,
             hasPlayedInitial: false,
-            isReady: true,
+            isReady: false,
           });
         }
       });
@@ -382,13 +383,8 @@ function App() {
   }
 
   const handleToggleReady = (playerId: string) => {
-    // Toggle ready state in the game store
-    const player = players.find(p => p.id === playerId);
-    if (player) {
-      // You'll need to add a toggleReady action in your game store
-      // For now, this is a placeholder
-      console.log('Toggle ready for player:', playerId);
-    }
+    console.log('Toggle ready for player:', playerId);
+    toggleReady(playerId);
   };
 
   // Lobby phase

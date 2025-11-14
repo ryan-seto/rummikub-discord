@@ -26,6 +26,7 @@ interface GameStore extends GameState {
   setMyPlayerId: (id: string) => void;
   addPlayer: (player: Player) => void;
   removePlayer: (playerId: string) => void;
+  toggleReady: (playerId: string) => void;
   syncGameState: (state: Partial<GameState>) => void;
 }
 
@@ -317,6 +318,16 @@ export const useGameStore = create<GameStore>((set, get) => ({
   removePlayer: (playerId: string) => {
     const { players } = get();
     set({ players: players.filter(p => p.id !== playerId) });
+  },
+
+  // Toggle player ready status
+  toggleReady: (playerId: string) => {
+    const { players } = get();
+    set({
+      players: players.map(p =>
+        p.id === playerId ? { ...p, isReady: !p.isReady } : p
+      )
+    });
   },
 
   // Sync game state from server broadcast

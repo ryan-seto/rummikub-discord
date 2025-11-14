@@ -38,15 +38,15 @@ export const GameControls: React.FC<GameControlsProps> = ({
   const seconds = timeRemaining % 60;
 
   return (
-    <div className="bg-gray-800 rounded-lg p-4 shadow-lg space-y-4">
+    <div className="bg-gray-800 rounded-lg p-2 shadow-lg space-y-2">
       {/* Timer and Pool info - side by side */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-2">
         {/* Timer */}
-        <div className="text-center p-3 bg-gray-700 rounded-lg">
+        <div className="text-center p-2 bg-gray-700 rounded-lg">
           <div className="text-gray-400 text-xs mb-1">Time</div>
           <div
             className={`
-              text-2xl font-bold font-mono
+              text-xl font-bold font-mono
               ${timeRemaining < 30 ? 'text-red-500 animate-pulse' : 'text-white'}
             `}
           >
@@ -55,34 +55,34 @@ export const GameControls: React.FC<GameControlsProps> = ({
         </div>
 
         {/* Pool info */}
-        <div className="text-center p-3 bg-gray-700 rounded-lg">
+        <div className="text-center p-2 bg-gray-700 rounded-lg">
           <div className="text-gray-400 text-xs mb-1">Pool</div>
-          <div className="text-2xl font-bold text-amber-400">{poolSize}</div>
+          <div className="text-xl font-bold text-amber-400">{poolSize}</div>
         </div>
       </div>
 
       {/* Action buttons */}
-      <div className="space-y-2">
+      <div className="space-y-1">
         <button
           onClick={onDrawTile}
-          disabled={!isMyTurn || !canDraw || poolSize === 0}  // ← poolSize === 0 check
+          disabled={!isMyTurn || !canDraw || poolSize === 0}
           className={`
-            w-full py-3 px-4 rounded-lg font-semibold
+            w-full py-2 px-3 rounded-lg font-semibold text-sm
             transition-all duration-200
             ${isMyTurn && canDraw && poolSize > 0
-                      ? 'bg-blue-600 hover:bg-blue-700 text-white cursor-pointer transform hover:scale-105'
+                      ? 'bg-blue-600 hover:bg-blue-700 text-white cursor-pointer'
                       : 'bg-gray-600 text-gray-400 cursor-not-allowed'
                     }
           `}
         >
-          {poolSize === 0 ? '🎴 No Tiles Left' : '🎴 Draw Tile'}
+          {poolSize === 0 ? '🎴 No Tiles' : '🎴 Draw'}
         </button>
 
         <button
           onClick={onUndo}
           disabled={!isMyTurn || !canUndo}
           className={`
-            w-full py-2 px-4 rounded-lg font-semibold text-sm
+            w-full py-2 px-3 rounded-lg font-semibold text-sm
             transition-all duration-200
             ${isMyTurn && canUndo
               ? 'bg-yellow-600 hover:bg-yellow-700 text-white cursor-pointer'
@@ -97,25 +97,24 @@ export const GameControls: React.FC<GameControlsProps> = ({
           onClick={onUndoLast}
           disabled={!isMyTurn || !canUndo}
           className={`
-            w-full py-3 rounded-lg font-semibold transition-all flex items-center justify-center gap-2
+            w-full py-2 px-3 rounded-lg font-semibold text-sm transition-all
             ${isMyTurn && canUndo
-              ? 'bg-orange-600 hover:bg-orange-700 text-white shadow-lg'
+              ? 'bg-orange-600 hover:bg-orange-700 text-white'
               : 'bg-gray-600 text-gray-400 cursor-not-allowed'
             }
           `}
         >
-          <span>↶</span>
-          Undo Last
+          ↶ Undo Last
         </button>
 
         <button
           onClick={onEndTurn}
           disabled={!isMyTurn || !canEndTurn}
           className={`
-            w-full py-3 px-4 rounded-lg font-semibold
+            w-full py-2 px-3 rounded-lg font-semibold text-sm
             transition-all duration-200
             ${isMyTurn && canEndTurn
-              ? 'bg-green-600 hover:bg-green-700 text-white cursor-pointer transform hover:scale-105'
+              ? 'bg-green-600 hover:bg-green-700 text-white cursor-pointer'
               : 'bg-gray-600 text-gray-400 cursor-not-allowed'
             }
           `}
@@ -124,22 +123,15 @@ export const GameControls: React.FC<GameControlsProps> = ({
         </button>
       </div>
 
-      {/* Status message */}
-      {!isMyTurn && (
-        <div className="text-center text-gray-400 text-sm">
-          Waiting for other players...
-        </div>
-      )}
-
       {/* Reset button (for testing) */}
-      <div className="border-t border-gray-700 pt-4 mt-4">
+      <div className="border-t border-gray-700 pt-2">
         <button
           onClick={onReset}
-          className="w-full py-2 px-4 rounded-lg font-semibold text-sm
+          className="w-full py-1 px-3 rounded-lg font-semibold text-xs
             bg-red-600 hover:bg-red-700 text-white cursor-pointer
             transition-all duration-200"
         >
-          🔄 Reset Game
+          🔄 Reset
         </button>
       </div>
     </div>
