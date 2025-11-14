@@ -256,9 +256,9 @@ function App() {
     try {
       console.log('🎴 Drawing tile');
 
-      // Trigger animation with a placeholder tile (we'll get the real one from the server)
+      // Trigger animation with a placeholder tile (unique ID ensures re-trigger)
       setDrawingTile({
-        id: 'temp',
+        id: `temp-${Date.now()}`,
         number: 0,
         color: null,
         isJoker: false,

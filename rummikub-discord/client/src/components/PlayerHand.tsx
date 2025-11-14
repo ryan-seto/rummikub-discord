@@ -27,7 +27,7 @@ export const PlayerHand: React.FC<PlayerHandProps> = ({ tiles, onTileClick }) =>
       // Remove the highlight after animation completes
       const timer = setTimeout(() => {
         setNewTileIds(new Set());
-      }, 2000);
+      }, 600);
 
       return () => clearTimeout(timer);
     }
@@ -78,7 +78,7 @@ export const PlayerHand: React.FC<PlayerHandProps> = ({ tiles, onTileClick }) =>
           sortedTiles.map((tile) => (
             <div
               key={tile.id}
-              className={`${newTileIds.has(tile.id) ? 'animate-new-tile' : ''}`}
+              className={`${newTileIds.has(tile.id) ? 'animate-landing-glow' : ''}`}
             >
               <Tile
                 tile={tile}
