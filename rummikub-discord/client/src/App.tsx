@@ -383,8 +383,9 @@ function App() {
   }
 
   const handleToggleReady = (playerId: string) => {
+    if (!channelId) return;
     console.log('Toggle ready for player:', playerId);
-    toggleReady(playerId);
+    toggleReady(channelId, playerId);
   };
 
   // Lobby phase

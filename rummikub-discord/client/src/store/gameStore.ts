@@ -26,7 +26,7 @@ interface GameStore extends GameState {
   setMyPlayerId: (id: string) => void;
   addPlayer: (player: Player) => void;
   removePlayer: (playerId: string) => void;
-  toggleReady: (playerId: string) => void;
+  toggleReady: (channelId: string, playerId: string) => Promise<void>;
   syncGameState: (state: Partial<GameState>) => void;
 }
 
@@ -321,13 +321,23 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   // Toggle player ready status
-  toggleReady: (playerId: string) => {
-    const { players } = get();
-    set({
-      players: players.map(p =>
-        p.id === playerId ? { ...p, isReady: !p.isReady } : p
-      )
-    });
+  toggleReady: async (channelId: string, playerId: string) => {
+    try {
+      console.log(`✓ Toggling ready for player ${playerId}`);
+      const response = await fetch(`/api/games/${channelId}/players/${playerId}/ready`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to toggle ready status');
+      }
+
+      const data = await response.json();
+      console.log(`✓ Ready status updated: ${data.isReady}`);
+    } catch (error) {
+      console.error('❌ Failed to toggle ready:', error);
+    }
   },
 
   // Sync game state from server broadcast

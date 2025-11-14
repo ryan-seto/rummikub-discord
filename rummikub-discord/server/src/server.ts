@@ -398,7 +398,7 @@ app.post('/api/games/init', (req: Request, res: Response) => {
       ...p,
       tilesCount: 14,
       hasPlayedInitial: false,
-      isReady: true,
+      isReady: false,
     })),
     currentPlayerIndex: 0,
     board: [],
@@ -414,6 +414,32 @@ app.post('/api/games/init', (req: Request, res: Response) => {
 
   console.log(`🎮 Game initialized for channel ${channelId} with ${players.length} players`);
   res.json({ success: true, gameId });
+});
+
+// Toggle player ready status
+app.post('/api/games/:gameId/players/:playerId/ready', (req: Request, res: Response) => {
+  const { gameId, playerId } = req.params;
+  const game = games.get(gameId);
+
+  if (!game) {
+    return res.status(404).json({ error: 'Game not found' });
+  }
+
+  // Find and toggle player
+  const player = game.players.find(p => p.id === playerId);
+  if (!player) {
+    return res.status(404).json({ error: 'Player not found' });
+  }
+
+  player.isReady = !player.isReady;
+  console.log(`✓ Player ${playerId} ready status: ${player.isReady}`);
+
+  // Broadcast updated state to all clients in this channel
+  io.to(gameId).emit('gameStateUpdate', {
+    players: game.players,
+  });
+
+  res.json({ success: true, isReady: player.isReady });
 });
 
 // Get player's private hand

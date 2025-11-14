@@ -35,7 +35,7 @@ export const WinnerScreen: React.FC<WinnerScreenProps> = ({ winner, onNewGame })
         </div>
         
         <p className="text-gray-300 text-xl mb-8">
-          Played all tiles and won the game! 🎴
+          Played all their tiles and won the game! 🎴
         </p>
         
         {onNewGame && (
