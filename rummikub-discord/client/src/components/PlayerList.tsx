@@ -28,7 +28,7 @@ export const PlayerList: React.FC<PlayerListProps> = ({
                 flex items-center justify-between p-2 rounded-lg
                 transition-all duration-200
                 ${isMyTurn
-                  ? 'bg-green-900/40 ring-2 ring-green-400 shadow-lg shadow-green-500/50 animate-pulse border border-green-400'
+                  ? 'bg-green-900/50 ring-2 ring-green-400 animate-pulse border border-green-400'
                   : isCurrentPlayer
                     ? 'bg-gray-700 ring-1 ring-green-400'
                     : isMe

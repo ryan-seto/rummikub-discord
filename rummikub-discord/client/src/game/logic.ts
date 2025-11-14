@@ -192,7 +192,7 @@ export function calculateHandValue(tiles: Tile[]): number {
 /**
  * Sorts tiles in a player's hand for easier viewing
  */
-export function sortHand(tiles: Tile[]): Tile[] {
+export function sortHandByColor(tiles: Tile[]): Tile[] {
   return [...tiles].sort((a, b) => {
     // Jokers go to the end
     if (a.isJoker && !b.isJoker) return 1;
@@ -202,8 +202,28 @@ export function sortHand(tiles: Tile[]): Tile[] {
     // Sort by color, then by number
     const colorOrder = [TileColor.RED, TileColor.BLUE, TileColor.YELLOW, TileColor.BLACK];
     const colorCompare = colorOrder.indexOf(a.color!) - colorOrder.indexOf(b.color!);
-    
+
     if (colorCompare !== 0) return colorCompare;
     return a.number - b.number;
   });
+}
+
+export function sortHandByNumber(tiles: Tile[]): Tile[] {
+  return [...tiles].sort((a, b) => {
+    // Jokers go to the end
+    if (a.isJoker && !b.isJoker) return 1;
+    if (!a.isJoker && b.isJoker) return -1;
+    if (a.isJoker && b.isJoker) return 0;
+
+    // Sort by number, then by color
+    if (a.number !== b.number) return a.number - b.number;
+
+    const colorOrder = [TileColor.RED, TileColor.BLUE, TileColor.YELLOW, TileColor.BLACK];
+    return colorOrder.indexOf(a.color!) - colorOrder.indexOf(b.color!);
+  });
+}
+
+// Default sorting (by color)
+export function sortHand(tiles: Tile[]): Tile[] {
+  return sortHandByColor(tiles);
 }

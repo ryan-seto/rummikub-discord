@@ -408,64 +408,62 @@ function App() {
   // Playing phase
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="h-screen bg-gradient-to-br from-gray-900 to-slate-800 p-2 overflow-hidden">
-        <div className="h-full flex gap-2">
-          {/* Left Column: Board + Hand stacked */}
-          <div className="flex-1 flex flex-col gap-2 overflow-hidden">
-            {/* Game Board - takes remaining space */}
-            <div className="flex-1 flex items-center justify-center overflow-hidden">
-              <GameBoard
-                tiles={board}
-                onTileDrop={handleTileDrop}
-              />
-            </div>
-
-            {/* Player Hand - fixed height at bottom */}
-            <div className="flex-shrink-0">
-              <PlayerHand
-                tiles={myHand.tiles}
-              />
-            </div>
-          </div>
-
-          {/* Right Column: Sidebar - full height */}
-          <div className="w-80 space-y-2 overflow-y-auto flex-shrink-0">
-            <GameControls
-              isMyTurn={!!isMyTurn}
-              canEndTurn={canEndTurn}
-              canUndo={canUndo}
-              canDraw={canDraw}
-              timeRemaining={turnTimeRemaining}
-              onDrawTile={handleDrawTile}
-              onEndTurn={handleEndTurn}
-              onUndo={handleUndoTurn}
-              onUndoLast={handleUndoLastAction}
-              onReset={async () => {
-                if (channelId) {
-                  await resetGame(channelId);
-                  window.location.reload();
-                }
-              }}
-              poolSize={pool.length}
-              players={players}
-              currentPlayerIndex={currentPlayerIndex}
-              myPlayerId={myPlayerId}
-            />
-
-            <PlayerList
-              players={players}
-              currentPlayerIndex={currentPlayerIndex}
-              myPlayerId={myPlayerId}
+      <div className="h-screen bg-gradient-to-br from-gray-900 to-slate-800 overflow-hidden flex">
+        {/* Left Column: Board + Hand stacked - fills remaining space */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Game Board - takes remaining space */}
+          <div className="flex-1 flex items-center justify-center overflow-hidden">
+            <GameBoard
+              tiles={board}
+              onTileDrop={handleTileDrop}
             />
           </div>
 
-          {/* Turn Error Display */}
-          {turnError && (
-            <div className="fixed bottom-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg">
-              {turnError}
-            </div>
-          )}
+          {/* Player Hand - fixed at bottom, flush with edges */}
+          <div className="flex-shrink-0">
+            <PlayerHand
+              tiles={myHand.tiles}
+            />
+          </div>
         </div>
+
+        {/* Right Column: Sidebar - full height, flush with right edge */}
+        <div className="w-80 space-y-2 overflow-y-auto flex-shrink-0 p-2 bg-gray-900/50">
+          <GameControls
+            isMyTurn={!!isMyTurn}
+            canEndTurn={canEndTurn}
+            canUndo={canUndo}
+            canDraw={canDraw}
+            timeRemaining={turnTimeRemaining}
+            onDrawTile={handleDrawTile}
+            onEndTurn={handleEndTurn}
+            onUndo={handleUndoTurn}
+            onUndoLast={handleUndoLastAction}
+            onReset={async () => {
+              if (channelId) {
+                await resetGame(channelId);
+                window.location.reload();
+              }
+            }}
+            poolSize={pool.length}
+            players={players}
+            currentPlayerIndex={currentPlayerIndex}
+            myPlayerId={myPlayerId}
+          />
+
+          <PlayerList
+            players={players}
+            currentPlayerIndex={currentPlayerIndex}
+            myPlayerId={myPlayerId}
+          />
+        </div>
+
+        {/* Turn Error Display */}
+        {turnError && (
+          <div className="fixed bottom-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg">
+            {turnError}
+          </div>
+        )}
       </div>
     </DndProvider>
   );

@@ -1,19 +1,54 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Tile } from './Tile';
 import { Tile as TileType } from '../types/game';
-import { sortHand } from '../game/logic';
+import { sortHandByColor, sortHandByNumber } from '../game/logic';
 
 interface PlayerHandProps {
   tiles: TileType[];
   onTileClick?: (tile: TileType) => void;
 }
 
+type SortMode = 'color' | 'number';
+
 export const PlayerHand: React.FC<PlayerHandProps> = ({ tiles, onTileClick }) => {
-  const sortedTiles = sortHand(tiles);
+  const [sortMode, setSortMode] = useState<SortMode>('color');
+
+  const sortedTiles = sortMode === 'color'
+    ? sortHandByColor(tiles)
+    : sortHandByNumber(tiles);
 
   return (
-    <div className="w-full bg-amber-900 p-2 rounded-t-lg shadow-2xl">
-      <div className="flex flex-wrap gap-1.5 justify-center max-h-[140px] overflow-y-auto">
+    <div className="w-full bg-amber-900 shadow-2xl">
+      <div className="flex items-center justify-between px-3 py-1.5 border-b border-amber-800">
+        <span className="text-amber-200 text-sm font-semibold">Your Hand</span>
+        <div className="flex gap-1">
+          <button
+            onClick={() => setSortMode('color')}
+            className={`
+              px-2 py-1 rounded text-xs font-semibold transition-all
+              ${sortMode === 'color'
+                ? 'bg-amber-700 text-white'
+                : 'bg-amber-800 text-amber-300 hover:bg-amber-750'
+              }
+            `}
+          >
+            Color
+          </button>
+          <button
+            onClick={() => setSortMode('number')}
+            className={`
+              px-2 py-1 rounded text-xs font-semibold transition-all
+              ${sortMode === 'number'
+                ? 'bg-amber-700 text-white'
+                : 'bg-amber-800 text-amber-300 hover:bg-amber-750'
+              }
+            `}
+          >
+            Number
+          </button>
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-1.5 justify-center px-3 py-2.5" style={{ minHeight: '136px', maxHeight: '136px' }}>
         {sortedTiles.length === 0 ? (
           <div className="text-amber-200 text-center py-4 w-full text-sm">
             No tiles

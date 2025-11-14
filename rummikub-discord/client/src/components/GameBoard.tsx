@@ -150,7 +150,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
             backgroundColor: 'rgba(255, 255, 255, 0.3)',
             border: '2px solid rgba(255, 255, 255, 0.8)',
             boxShadow: '0 0 20px rgba(255, 255, 255, 0.6)',
-            transition: 'left 50ms cubic-bezier(0.4, 0, 0.2, 1), top 50ms cubic-bezier(0.4, 0, 0.2, 1)',
+            transition: 'left 25ms cubic-bezier(0.4, 0, 0.2, 1), top 25ms cubic-bezier(0.4, 0, 0.2, 1)',
           }}
         >
           <div className="text-white text-xs font-bold p-1">
