@@ -1,14 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Player } from '../types/game';
 
 interface LobbyProps {
   players: Player[];
-  onStartGame: () => void;
+  onStartGame: (turnTimer: number) => void;
   onToggleReady?: (playerId: string) => void;
   myPlayerId?: string | null;
   minPlayers?: number;
   maxPlayers?: number;
 }
+
+const TIMER_OPTIONS = [30, 60, 120]; // 30s, 1min, 2min in seconds
 
 export const Lobby: React.FC<LobbyProps> = ({
   players,
@@ -18,9 +20,24 @@ export const Lobby: React.FC<LobbyProps> = ({
   minPlayers = 2,
   maxPlayers = 4,
 }) => {
-  const canStart = players.length >= minPlayers && 
-                   players.length <= maxPlayers && 
+  const [selectedTimerIndex, setSelectedTimerIndex] = useState(1); // Default to 1min
+
+  const canStart = players.length >= minPlayers &&
+                   players.length <= maxPlayers &&
                    players.every(p => p.isReady);
+
+  const handlePreviousTimer = () => {
+    setSelectedTimerIndex((prev) => (prev === 0 ? TIMER_OPTIONS.length - 1 : prev - 1));
+  };
+
+  const handleNextTimer = () => {
+    setSelectedTimerIndex((prev) => (prev === TIMER_OPTIONS.length - 1 ? 0 : prev + 1));
+  };
+
+  const formatTimer = (seconds: number) => {
+    if (seconds < 60) return `${seconds}s`;
+    return `${seconds / 60}min`;
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 flex items-center justify-center p-4">
@@ -44,6 +61,33 @@ export const Lobby: React.FC<LobbyProps> = ({
             <li>• Jokers can substitute any tile</li>
             <li>• First player to play all tiles wins!</li>
           </ul>
+        </div>
+
+        {/* Timer Selection */}
+        <div className="bg-gray-700 rounded-lg p-6 mb-6">
+          <h3 className="text-white font-bold text-lg mb-4">⏱️ Turn Timer</h3>
+          <div className="flex items-center justify-center gap-4">
+            <button
+              onClick={handlePreviousTimer}
+              className="w-10 h-10 rounded-lg bg-gray-600 hover:bg-gray-500 text-white flex items-center justify-center transition-colors"
+              aria-label="Previous timer option"
+            >
+              ←
+            </button>
+            <div className="bg-gray-600 rounded-lg px-8 py-3 min-w-[120px] text-center">
+              <div className="text-2xl font-bold text-white">
+                {formatTimer(TIMER_OPTIONS[selectedTimerIndex])}
+              </div>
+              <div className="text-xs text-gray-400 mt-1">per turn</div>
+            </div>
+            <button
+              onClick={handleNextTimer}
+              className="w-10 h-10 rounded-lg bg-gray-600 hover:bg-gray-500 text-white flex items-center justify-center transition-colors"
+              aria-label="Next timer option"
+            >
+              →
+            </button>
+          </div>
         </div>
 
         {/* Player List */}
@@ -129,7 +173,7 @@ export const Lobby: React.FC<LobbyProps> = ({
 
         {/* Start button */}
         <button
-          onClick={onStartGame}
+          onClick={() => onStartGame(TIMER_OPTIONS[selectedTimerIndex])}
           disabled={!canStart}
           className={`
             w-full py-4 rounded-lg font-bold text-lg

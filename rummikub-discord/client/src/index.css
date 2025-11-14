@@ -72,43 +72,26 @@ body {
     top: 10%;
     right: 15%;
     opacity: 1;
-    transform: scale(0.8) rotate(0deg);
+    transform: scale(0.8);
   }
-  50% {
-    /* Arc through middle of screen */
-    top: 40%;
-    right: 50%;
+  70% {
+    /* Hold above player hand */
+    bottom: 160px;
+    left: 50%;
     opacity: 1;
-    transform: scale(1.2) rotate(180deg);
+    transform: translateX(-50%) scale(1.3);
   }
   100% {
-    /* End at player hand (bottom center) */
-    top: 85%;
-    right: 50%;
+    /* Fade out at same position */
+    bottom: 160px;
+    left: 50%;
     opacity: 0;
-    transform: scale(0.6) rotate(360deg);
+    transform: translateX(-50%) scale(1.3);
   }
 }
 
 .tile-draw-path {
-  position: absolute;
+  position: fixed;
   animation: drawTilePath 1.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-  filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.9));
-}
-
-/* Brief white glow for newly drawn tiles */
-@keyframes whiteLandingGlow {
-  0% {
-    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
-  }
-  50% {
-    box-shadow: 0 0 20px 8px rgba(255, 255, 255, 0.8);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
-  }
-}
-
-.animate-landing-glow {
-  animation: whiteLandingGlow 0.6s ease-out;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.5));
 }

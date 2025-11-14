@@ -15,8 +15,8 @@ interface GameStore extends GameState {
   // Actions now call server APIs
   initializeGame: (channelId: string, players: Player[]) => Promise<void>;
   fetchMyHand: (channelId: string, playerId: string) => Promise<void>;
-  startGame: (channelId: string) => Promise<void>;
-  drawTile: (channelId: string, playerId: string) => Promise<void>;
+  startGame: (channelId: string, turnTimer?: number) => Promise<void>;
+  drawTile: (channelId: string, playerId: string) => Promise<Tile>;
   placeTile: (channelId: string, playerId: string, tile: Tile, position: { x: number; y: number }, setId: string) => Promise<void>;
   moveTile: (channelId: string, tileId: string, position: { x: number; y: number }, setId: string) => Promise<void>;
   endTurn: (channelId: string, playerId?: string) => Promise<void>;  // ← Add playerId param
@@ -101,11 +101,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   // Start game on server
-  startGame: async (channelId: string) => {
+  startGame: async (channelId: string, turnTimer: number = 60) => {
     try {
-      console.log('🎮 Starting game on server...');
+      console.log('🎮 Starting game on server with timer:', turnTimer);
       const response = await fetch(`/api/games/${channelId}/start`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ turnTimer }),
       });
 
       if (!response.ok) {
@@ -140,6 +142,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
       set({ myHand: { tiles: [...myHand.tiles, data.tile] } });
       console.log('✅ Tile drawn');
+      return data.tile;
     } catch (error: any) {
       console.error('❌ Failed to draw tile:', error.message);
       throw error;
