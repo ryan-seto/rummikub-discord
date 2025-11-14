@@ -6,10 +6,7 @@ Bugs:
 Features:
 - No way to restart game or start new game at the end, should be able to go back to lobby screen
 - Maybe be able to move tiles from board to hand? (So you don't have to undo)
-- Sort tile by colour or number
 - Add a draw tile animation to indicate the new tile
--  "are you sure" popup for drawing a tile?
-- Ready up feature in lobby screen, game can't start unless everyone is ready
 - Variable timer in ready up screen: 30s, 1min, 2min
 - How to handle points scoring when a meld has 1 regular tile and 2 jokers? How to differentiate between a run or group
 
@@ -17,4 +14,3 @@ UI:
 - Update aesthetics of different things
 - No indication of invalid board state - Players don't know why they can't end turn until they try (maybe add popup)
 - Change users to display name instead of Discord username, maybe?
-- smoother tile moving animations

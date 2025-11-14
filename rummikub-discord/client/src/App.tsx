@@ -9,6 +9,7 @@ import { GameBoard } from './components/GameBoard';
 import { PlayerHand } from './components/PlayerHand';
 import { PlayerList } from './components/PlayerList';
 import { GameControls } from './components/GameControls';
+import { TileDrawAnimation } from './components/TileDrawAnimation';
 import { GamePhase, Player, Tile } from './types/game';
 import { useSocket } from './hooks/useSocket';
 import { WinnerScreen } from './components/WinnerScreen';
@@ -56,6 +57,7 @@ function App() {
   // const [discordUser, setDiscordUser] = useState<DiscordUser | null>(null);
   const [hasInitialized, setHasInitialized] = useState(false);
   const [turnError, setTurnError] = useState<string | null>(null);
+  const [drawingTile, setDrawingTile] = useState<Tile | null>(null);
   const isSyncing = useRef(false);
   const isHandlingTimeout = useRef(false);
 
@@ -253,9 +255,19 @@ function App() {
 
     try {
       console.log('🎴 Drawing tile');
+
+      // Trigger animation with a placeholder tile (we'll get the real one from the server)
+      setDrawingTile({
+        id: 'temp',
+        number: 0,
+        color: null,
+        isJoker: false,
+      });
+
       await drawTile(channelId, myPlayerId);
     } catch (error: any) {
       console.error('❌ Draw failed:', error);
+      setDrawingTile(null); // Clear animation on error
       // Show error if pool is empty
       if (error.message.includes('pool')) {
         setTurnError('No tiles left to draw!');
@@ -464,6 +476,12 @@ function App() {
             {turnError}
           </div>
         )}
+
+        {/* Tile Draw Animation */}
+        <TileDrawAnimation
+          tile={drawingTile}
+          onComplete={() => setDrawingTile(null)}
+        />
       </div>
     </DndProvider>
   );
