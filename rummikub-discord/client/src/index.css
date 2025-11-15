@@ -71,33 +71,35 @@ body {
     /* Start at pool counter position (top right area) */
     top: 10%;
     right: 15%;
-    left: auto;
     opacity: 1;
     transform: scale(0.8);
   }
   50% {
     /* Hold above player hand - clearly visible */
-    top: calc(100vh - 250px);
+    bottom: 180px;
     left: 50%;
+    top: auto;
     right: auto;
     opacity: 1;
     transform: translateX(-50%) scale(1.4);
   }
   70% {
     /* Still holding above hand */
-    top: calc(100vh - 250px);
+    bottom: 180px;
     left: 50%;
+    top: auto;
     right: auto;
     opacity: 1;
     transform: translateX(-50%) scale(1.4);
   }
   100% {
-    /* Move to exact sorted position in hand */
-    top: var(--target-y);
-    left: var(--target-x);
+    /* Move down into hand area and fade */
+    bottom: 60px;
+    left: 50%;
+    top: auto;
     right: auto;
     opacity: 0;
-    transform: scale(1);
+    transform: translateX(-50%) scale(0.8);
   }
 }
 

@@ -1,19 +1,17 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Tile as TileType } from '../types/game';
 
 interface TileDrawAnimationProps {
   tile: TileType | null;
-  targetPosition: { x: number; y: number } | null; // Position in the hand where tile will land
   onComplete: () => void;
 }
 
-export const TileDrawAnimation: React.FC<TileDrawAnimationProps> = ({ tile, targetPosition, onComplete }) => {
+export const TileDrawAnimation: React.FC<TileDrawAnimationProps> = ({ tile, onComplete }) => {
   const [isAnimating, setIsAnimating] = useState(false);
   const [animKey, setAnimKey] = useState(0);
-  const animationRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (tile && targetPosition) {
+    if (tile) {
       // Force re-render with new key to restart animation
       setAnimKey(prev => prev + 1);
       setIsAnimating(true);
@@ -27,9 +25,9 @@ export const TileDrawAnimation: React.FC<TileDrawAnimationProps> = ({ tile, targ
     } else {
       setIsAnimating(false);
     }
-  }, [tile, targetPosition, onComplete]);
+  }, [tile, onComplete]);
 
-  if (!tile || !isAnimating || !targetPosition) return null;
+  if (!tile || !isAnimating) return null;
 
   const colorClasses = {
     red: 'text-red-600',
@@ -42,12 +40,7 @@ export const TileDrawAnimation: React.FC<TileDrawAnimationProps> = ({ tile, targ
     <div className="fixed inset-0 pointer-events-none z-50">
       <div
         key={animKey}
-        ref={animationRef}
         className="tile-draw-path"
-        style={{
-          '--target-x': `${targetPosition.x}px`,
-          '--target-y': `${targetPosition.y}px`,
-        } as React.CSSProperties}
       >
         {tile.isJoker ? (
           <div className="w-10 h-12 bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg shadow-lg border-2 border-amber-200 relative">
