@@ -281,6 +281,7 @@ function App() {
 
         // Calculate position in flex wrap layout
         const tileWidth = 40; // w-10 = 40px
+        const tileHeight = 48; // h-12 = 48px
         const gap = 6; // gap-1.5 = 6px
         const padding = 16; // px-4 = 16px
 
@@ -289,9 +290,11 @@ function App() {
         const row = Math.floor(tileIndex / tilesPerRow);
         const col = tileIndex % tilesPerRow;
 
+        // Calculate absolute position from top-left of viewport
         const x = containerRect.left + padding + col * (tileWidth + gap);
-        const y = window.innerHeight - containerRect.bottom + padding + row * (48 + gap);
+        const y = containerRect.top + padding + row * (tileHeight + gap);
 
+        console.log('🎯 Target position:', { x, y, tileIndex, row, col, containerRect });
         setAnimationTargetPos({ x, y });
       }
 

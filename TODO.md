@@ -6,9 +6,8 @@ Bugs:
 Features:
 - No way to restart game or start new game at the end, should be able to go back to lobby screen
 - Maybe be able to move tiles from board to hand? (So you don't have to undo)
-- Add a draw tile animation to indicate the new tile
-- Variable timer in ready up screen: 30s, 1min, 2min
 - How to handle points scoring when a meld has 1 regular tile and 2 jokers? How to differentiate between a run or group
+- Implement uptime robot
 
 UI:
 - Update aesthetics of different things
