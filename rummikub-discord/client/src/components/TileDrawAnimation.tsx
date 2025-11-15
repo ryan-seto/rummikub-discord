@@ -19,7 +19,7 @@ export const TileDrawAnimation: React.FC<TileDrawAnimationProps> = ({ tile, onCo
       const timer = setTimeout(() => {
         setIsAnimating(false);
         onComplete();
-      }, 1500); // Animation duration (matches CSS - 1.5s)
+      }, 1200); // Animation duration (matches CSS - 1.2s)
 
       return () => clearTimeout(timer);
     } else {
