@@ -6,6 +6,7 @@ import { sortHandByColor, sortHandByNumber } from '../game/logic';
 interface PlayerHandProps {
   tiles: TileType[];
   onTileClick?: (tile: TileType) => void;
+  highlightTileId?: string | null;
 }
 
 export type SortMode = 'color' | 'number';
@@ -15,7 +16,7 @@ export interface PlayerHandRef {
   getContainerElement: () => HTMLDivElement | null;
 }
 
-export const PlayerHand = forwardRef<PlayerHandRef, PlayerHandProps>(({ tiles, onTileClick }, ref) => {
+export const PlayerHand = forwardRef<PlayerHandRef, PlayerHandProps>(({ tiles, onTileClick, highlightTileId }, ref) => {
   const [sortMode, setSortMode] = useState<SortMode>('color');
   const containerRef = React.useRef<HTMLDivElement>(null);
 
@@ -70,6 +71,7 @@ export const PlayerHand = forwardRef<PlayerHandRef, PlayerHandProps>(({ tiles, o
               key={tile.id}
               tile={tile}
               isDraggable={true}
+              isHighlighted={highlightTileId === tile.id}
             />
           ))
         )}

@@ -7,13 +7,15 @@ interface TileProps {
   size?: 'small' | 'medium' | 'large';
   isDraggable?: boolean;
   fromBoard?: boolean; // New prop to indicate if tile is on board
+  isHighlighted?: boolean; // Visual cue for newly drawn tile
 }
 
 export const Tile: React.FC<TileProps> = ({
   tile,
   size = 'medium',
   isDraggable = true,
-  fromBoard = false
+  fromBoard = false,
+  isHighlighted = false
 }) => {
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'tile',
@@ -40,11 +42,16 @@ export const Tile: React.FC<TileProps> = ({
     black: 'text-black',
   };
 
+  // Add highlight effect for newly drawn tiles
+  const highlightClasses = isHighlighted
+    ? 'ring-4 ring-green-400 ring-opacity-75 shadow-2xl shadow-green-400/50'
+    : '';
+
   if (tile.isJoker) {
     return (
       <div
         ref={drag}
-        className={`${sizeClasses[size]} bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg shadow-lg border-2 border-amber-200 cursor-move relative ${isDragging ? 'opacity-50' : 'opacity-100'}`}
+        className={`${sizeClasses[size]} bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg shadow-lg border-2 border-amber-200 cursor-move relative ${isDragging ? 'opacity-50' : 'opacity-100'} ${highlightClasses}`}
       >
         <div className="absolute inset-0 flex items-center justify-center">
           <span style={{
@@ -61,8 +68,7 @@ export const Tile: React.FC<TileProps> = ({
   return (
     <div
       ref={drag}
-      className={`${sizeClasses[size]} bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg shadow-lg flex items-center justify-center font-bold border-2 border-amber-200 cursor-move ${isDragging ? 'opacity-50' : 'opacity-100'
-        }`}
+      className={`${sizeClasses[size]} bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg shadow-lg flex items-center justify-center font-bold border-2 border-amber-200 cursor-move ${isDragging ? 'opacity-50' : 'opacity-100'} ${highlightClasses}`}
     >
       <span className={colorClasses[tile.color || 'black']}>{tile.number}</span>
     </div>

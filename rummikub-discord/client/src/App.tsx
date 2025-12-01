@@ -9,7 +9,6 @@ import { GameBoard } from './components/GameBoard';
 import { PlayerHand } from './components/PlayerHand';
 import { PlayerList } from './components/PlayerList';
 import { GameControls } from './components/GameControls';
-import { TileDrawAnimation } from './components/TileDrawAnimation';
 import { GamePhase, Player, Tile } from './types/game';
 import { useSocket } from './hooks/useSocket';
 import { WinnerScreen } from './components/WinnerScreen';
@@ -57,7 +56,7 @@ function App() {
   // const [discordUser, setDiscordUser] = useState<DiscordUser | null>(null);
   const [hasInitialized, setHasInitialized] = useState(false);
   const [turnError, setTurnError] = useState<string | null>(null);
-  const [drawingTile, setDrawingTile] = useState<Tile | null>(null);
+  const [drawnTileId, setDrawnTileId] = useState<string | null>(null);
   const isSyncing = useRef(false);
   const isHandlingTimeout = useRef(false);
 
@@ -172,6 +171,11 @@ function App() {
 
   const isMyTurn = myPlayerId && players[currentPlayerIndex]?.id === myPlayerId;
 
+  // Clear drawn tile visual cue when turn changes
+  useEffect(() => {
+    setDrawnTileId(null);
+  }, [currentPlayerIndex]);
+
   // Handle timer expiration
   const handleTimeExpired = useCallback(async () => {
     if (!channelId || !myPlayerId) return;
@@ -259,11 +263,11 @@ function App() {
       // Draw the tile from server first
       const drawnTile = await drawTile(channelId, myPlayerId);
 
-      // Trigger animation with the actual tile drawn
-      setDrawingTile(drawnTile);
+      // Set the drawn tile ID for visual cue
+      setDrawnTileId(drawnTile.id);
     } catch (error: any) {
       console.error('❌ Draw failed:', error);
-      setDrawingTile(null); // Clear animation on error
+      setDrawnTileId(null); // Clear on error
       // Show error if pool is empty
       if (error.message.includes('pool')) {
         setTurnError('No tiles left to draw!');
@@ -431,6 +435,7 @@ function App() {
           <div className="flex-shrink-0">
             <PlayerHand
               tiles={myHand.tiles}
+              highlightTileId={drawnTileId}
             />
           </div>
         </div>
@@ -472,12 +477,6 @@ function App() {
             {turnError}
           </div>
         )}
-
-        {/* Tile Draw Animation */}
-        <TileDrawAnimation
-          tile={drawingTile}
-          onComplete={() => setDrawingTile(null)}
-        />
       </div>
     </DndProvider>
   );

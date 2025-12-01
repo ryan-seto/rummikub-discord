@@ -41,79 +41,77 @@ export const Lobby: React.FC<LobbyProps> = ({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 flex items-center justify-center p-4">
-      <div className="max-w-2xl w-full bg-gray-800 rounded-2xl shadow-2xl p-8">
+      <div className="max-w-2xl w-full bg-gray-800 rounded-2xl shadow-2xl p-6">
         {/* Title */}
-        <div className="text-center mb-8">
-          <h1 className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500 mb-2">
+        <div className="text-center mb-4">
+          <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500 mb-1">
             Rummikub
           </h1>
-          <p className="text-gray-400">Waiting for players to join...</p>
+          <p className="text-gray-400 text-sm">Waiting for players to join...</p>
         </div>
 
         {/* Game Rules */}
-        <div className="bg-gray-700 rounded-lg p-6 mb-6">
-          <h3 className="text-white font-bold text-lg mb-3">📜 Quick Rules</h3>
-          <ul className="text-gray-300 text-sm space-y-2">
-            <li>• Each player starts with 14 tiles</li>
-            <li>• First play must total at least 30 points</li>
-            <li>• Form runs (same color, consecutive) or groups (same number, different colors)</li>
-            <li>• Each meld must have at least 3 tiles</li>
-            <li>• Jokers can substitute any tile</li>
-            <li>• First player to play all tiles wins!</li>
+        <div className="bg-gray-700 rounded-lg p-3 mb-3">
+          <h3 className="text-white font-semibold text-sm mb-2">📜 Quick Rules</h3>
+          <ul className="text-gray-300 text-xs space-y-0.5">
+            <li>• Start with 14 tiles • First play ≥30 points</li>
+            <li>• Runs (same color, consecutive) or Groups (same #, diff colors)</li>
+            <li>• Melds need 3+ tiles • Jokers substitute any tile</li>
+            <li>• First to play all tiles wins!</li>
           </ul>
         </div>
 
         {/* Timer Selection */}
-        <div className="bg-gray-700 rounded-lg p-6 mb-6">
-          <h3 className="text-white font-bold text-lg mb-4">⏱️ Turn Timer</h3>
-          <div className="flex items-center justify-center gap-4">
-            <button
-              onClick={handlePreviousTimer}
-              className="w-10 h-10 rounded-lg bg-gray-600 hover:bg-gray-500 text-white flex items-center justify-center transition-colors"
-              aria-label="Previous timer option"
-            >
-              ←
-            </button>
-            <div className="bg-gray-600 rounded-lg px-8 py-3 min-w-[120px] text-center">
-              <div className="text-2xl font-bold text-white">
-                {formatTimer(TIMER_OPTIONS[selectedTimerIndex])}
+        <div className="bg-gray-700 rounded-lg p-3 mb-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-white font-semibold text-sm">⏱️ Turn Timer</h3>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handlePreviousTimer}
+                className="w-7 h-7 rounded bg-gray-600 hover:bg-gray-500 text-white flex items-center justify-center transition-colors text-sm"
+                aria-label="Previous timer option"
+              >
+                ←
+              </button>
+              <div className="bg-gray-600 rounded px-4 py-1.5 min-w-[80px] text-center">
+                <div className="text-sm font-bold text-white">
+                  {formatTimer(TIMER_OPTIONS[selectedTimerIndex])}
+                </div>
               </div>
-              <div className="text-xs text-gray-400 mt-1">per turn</div>
+              <button
+                onClick={handleNextTimer}
+                className="w-7 h-7 rounded bg-gray-600 hover:bg-gray-500 text-white flex items-center justify-center transition-colors text-sm"
+                aria-label="Next timer option"
+              >
+                →
+              </button>
             </div>
-            <button
-              onClick={handleNextTimer}
-              className="w-10 h-10 rounded-lg bg-gray-600 hover:bg-gray-500 text-white flex items-center justify-center transition-colors"
-              aria-label="Next timer option"
-            >
-              →
-            </button>
           </div>
         </div>
 
         {/* Player List */}
-        <div className="bg-gray-700 rounded-lg p-6 mb-6">
-          <h3 className="text-white font-bold text-lg mb-4">
+        <div className="bg-gray-700 rounded-lg p-3 mb-3">
+          <h3 className="text-white font-semibold text-sm mb-2">
             Players ({players.length}/{maxPlayers})
           </h3>
           
           {players.length === 0 ? (
-            <div className="text-center text-gray-400 py-8">
-              <p>No players yet</p>
-              <p className="text-sm mt-2">Invite friends to join!</p>
+            <div className="text-center text-gray-400 py-4">
+              <p className="text-sm">No players yet - Invite friends to join!</p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {players.map((player, index) => {
                 const isMe = player.id === myPlayerId;
 
                 return (
                   <div
                     key={player.id}
-                    className={`flex items-center gap-3 p-3 rounded-lg ${
-                      isMe ? 'bg-blue-900/30 border-2 border-blue-400' : 'bg-gray-600'
+                    className={`flex items-center gap-2 p-2 rounded-lg ${
+                      isMe ? 'bg-blue-900/30 border border-blue-400' : 'bg-gray-600'
                     }`}
                   >
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-white font-bold text-lg">
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-white font-bold text-sm">
                       {player.avatar ? (
                         <img
                           src={`https://cdn.discordapp.com/avatars/${player.id}/${player.avatar}.png`}
@@ -126,33 +124,29 @@ export const Lobby: React.FC<LobbyProps> = ({
                     </div>
 
                     <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="text-white font-semibold">{player.username}</p>
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-white text-sm font-semibold">{player.username}</p>
                         {isMe && <span className="text-xs text-blue-300">(You)</span>}
                       </div>
-                      <p className="text-gray-400 text-sm">
-                        Player {index + 1}
-                      </p>
                     </div>
 
                     {/* Ready checkbox for current player, status for others */}
                     {isMe && onToggleReady ? (
-                      <label className="flex items-center gap-2 cursor-pointer">
+                      <label className="flex items-center gap-1.5 cursor-pointer">
                         <input
                           type="checkbox"
                           checked={player.isReady}
                           onChange={() => onToggleReady(player.id)}
-                          className="w-5 h-5 rounded border-gray-400 text-green-500 focus:ring-2 focus:ring-green-400 cursor-pointer"
+                          className="w-4 h-4 rounded border-gray-400 text-green-500 focus:ring-1 focus:ring-green-400 cursor-pointer"
                         />
-                        <span className="text-white text-sm font-semibold">Ready</span>
+                        <span className="text-white text-xs font-semibold">Ready</span>
                       </label>
                     ) : player.isReady ? (
-                      <div className="text-green-400 font-semibold flex items-center gap-1">
-                        <span>✓</span>
-                        <span className="text-sm">Ready</span>
+                      <div className="text-green-400 font-semibold flex items-center gap-0.5">
+                        <span className="text-xs">✓ Ready</span>
                       </div>
                     ) : (
-                      <span className="text-gray-400 text-sm">Not ready</span>
+                      <span className="text-gray-400 text-xs">Not ready</span>
                     )}
                   </div>
                 );
@@ -163,10 +157,9 @@ export const Lobby: React.FC<LobbyProps> = ({
 
         {/* Player requirements message */}
         {players.length < minPlayers && (
-          <div className="bg-yellow-900/30 border border-yellow-600 rounded-lg p-4 mb-6">
-            <p className="text-yellow-400 text-center">
-              Need at least {minPlayers} players to start
-              ({minPlayers - players.length} more needed)
+          <div className="bg-yellow-900/30 border border-yellow-600 rounded-lg p-2 mb-3">
+            <p className="text-yellow-400 text-center text-xs">
+              Need {minPlayers} players ({minPlayers - players.length} more needed)
             </p>
           </div>
         )}
@@ -176,7 +169,7 @@ export const Lobby: React.FC<LobbyProps> = ({
           onClick={() => onStartGame(TIMER_OPTIONS[selectedTimerIndex])}
           disabled={!canStart}
           className={`
-            w-full py-4 rounded-lg font-bold text-lg
+            w-full py-3 rounded-lg font-bold text-base
             transition-all duration-200
             ${canStart
               ? 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white cursor-pointer transform hover:scale-105 shadow-lg'
