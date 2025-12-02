@@ -9,7 +9,7 @@ import { GameBoard } from './components/GameBoard';
 import { PlayerHand } from './components/PlayerHand';
 import { PlayerList } from './components/PlayerList';
 import { GameControls } from './components/GameControls';
-import { GamePhase, Player, Tile } from './types/game';
+import { GamePhase, Player, Tile, TileOnBoard } from './types/game';
 import { useSocket } from './hooks/useSocket';
 import { WinnerScreen } from './components/WinnerScreen';
 
@@ -316,6 +316,66 @@ function App() {
     await undoLastAction(channelId, myPlayerId);
   };
 
+  // Helper: Find all tiles in a meld by setId
+  const getTilesInMeld = (setId: string) => {
+    return board.filter(t => t.setId === setId);
+  };
+
+  // Helper: Check if a position is valid and unoccupied
+  const isPositionAvailable = (x: number, y: number, excludeTileIds: string[] = []) => {
+    if (x < 0 || x > 24 || y < 0 || y > 9) return false;
+    return !board.some(t => t.position.x === x && t.position.y === y && !excludeTileIds.includes(t.id));
+  };
+
+  // Helper: Find empty horizontal space for a meld of given length
+  const findEmptySpaceForMeld = (meldLength: number): { x: number; y: number } | null => {
+    // Try each row
+    for (let y = 0; y <= 9; y++) {
+      // Try each starting position
+      for (let startX = 0; startX <= 25 - meldLength; startX++) {
+        // Check if all positions in this range are available
+        let allAvailable = true;
+        for (let x = startX; x < startX + meldLength; x++) {
+          if (!isPositionAvailable(x, y)) {
+            allAvailable = false;
+            break;
+          }
+        }
+        if (allAvailable) {
+          return { x: startX, y };
+        }
+      }
+    }
+    return null;
+  };
+
+  // Helper: Relocate entire meld to new position
+  const relocateMeld = async (meldTiles: TileOnBoard[], newStartPosition: { x: number; y: number }) => {
+    if (!channelId) return false;
+
+    // Sort tiles by x position to maintain order
+    const sortedTiles = [...meldTiles].sort((a, b) => a.position.x - b.position.x);
+
+    console.log(`🔄 Relocating meld of ${sortedTiles.length} tiles to position (${newStartPosition.x}, ${newStartPosition.y})`);
+
+    try {
+      // Move each tile to its new position
+      for (let i = 0; i < sortedTiles.length; i++) {
+        const tile = sortedTiles[i];
+        const newPosition = {
+          x: newStartPosition.x + i,
+          y: newStartPosition.y
+        };
+
+        await moveTile(channelId, tile.id, newPosition, tile.setId);
+      }
+      return true;
+    } catch (error) {
+      console.error('❌ Failed to relocate meld:', error);
+      return false;
+    }
+  };
+
   const handleTileDrop = async (
     tile: Tile,
     position: { x: number; y: number },
@@ -349,6 +409,65 @@ function App() {
     });
 
     const setId = snapToSetId || `set-${Date.now()}`;
+
+    // Check if position is occupied or out of bounds
+    const excludeIds = fromBoard && tileId ? [tileId] : [];
+    const positionBlocked = !isPositionAvailable(snappedPosition.x, snappedPosition.y, excludeIds);
+
+    // If position is blocked and we're trying to extend an existing meld, relocate it
+    if (positionBlocked && snapToSetId && !fromBoard) {
+      console.log('⚠️ Position blocked, attempting to relocate meld...');
+
+      // Get all tiles in the target meld
+      const meldTiles = getTilesInMeld(snapToSetId);
+
+      if (meldTiles.length > 0) {
+        // Find new space for meld + new tile
+        const newMeldLength = meldTiles.length + 1;
+        const newLocation = findEmptySpaceForMeld(newMeldLength);
+
+        if (newLocation) {
+          console.log(`✨ Found new location at (${newLocation.x}, ${newLocation.y}) for ${newMeldLength} tiles`);
+
+          // Relocate the existing meld
+          const relocated = await relocateMeld(meldTiles, newLocation);
+
+          if (relocated) {
+            // Now place the new tile at the appropriate position
+            const sortedMeld = [...meldTiles].sort((a, b) => a.position.x - b.position.x);
+
+            // Determine if new tile should go at start or end
+            // Check which side it was originally trying to extend
+            const firstMeldX = sortedMeld[0].position.x;
+            const lastMeldX = sortedMeld[sortedMeld.length - 1].position.x;
+            const isExtendingRight = snappedPosition.x > lastMeldX || snappedPosition.x < firstMeldX ? snappedPosition.x > lastMeldX : true;
+
+            const newTilePosition = isExtendingRight
+              ? { x: newLocation.x + sortedMeld.length, y: newLocation.y }
+              : { x: newLocation.x, y: newLocation.y };
+
+            // If extending left, we need to shift all tiles by 1
+            if (!isExtendingRight) {
+              console.log('📍 Extending left, shifting meld positions');
+              const shiftedLocation = { x: newLocation.x + 1, y: newLocation.y };
+              await relocateMeld(meldTiles, shiftedLocation);
+            }
+
+            console.log(`🎴 Placing new tile at relocated position (${newTilePosition.x}, ${newTilePosition.y})`);
+            await placeTile(channelId, myPlayerId, tile, newTilePosition, setId);
+            return; // Success!
+          } else {
+            setTurnError('Failed to relocate meld');
+            setTimeout(() => setTurnError(null), 3000);
+            return;
+          }
+        } else {
+          setTurnError('No space available to relocate meld');
+          setTimeout(() => setTurnError(null), 3000);
+          return;
+        }
+      }
+    }
 
     try {
       if (fromBoard && tileId) {
