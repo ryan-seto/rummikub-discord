@@ -155,14 +155,17 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
         </div>
       )}
 
-      {/* Tiles on board - positioned in grid cells */}
+      {/* Tiles on board - positioned absolutely with smooth transitions */}
       {tiles.map((tile) => (
         <div
           key={tile.id}
-          className="flex items-center justify-center z-30"
+          className="absolute flex items-center justify-center z-30"
           style={{
-            gridColumn: tile.position.x + 1,
-            gridRow: tile.position.y + 1,
+            left: `${PADDING + tile.position.x * CELL_WIDTH}px`,
+            top: `${PADDING + tile.position.y * CELL_HEIGHT}px`,
+            width: `${CELL_WIDTH}px`,
+            height: `${CELL_HEIGHT}px`,
+            transition: 'left 0.3s ease-out, top 0.3s ease-out',
           }}
           title={`Position: (${tile.position.x}, ${tile.position.y})`}
         >

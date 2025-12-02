@@ -331,8 +331,9 @@ function App() {
   const findEmptySpaceForMeld = (meldLength: number): { x: number; y: number } | null => {
     // Try each row
     for (let y = 0; y <= 9; y++) {
-      // Try each starting position
-      for (let startX = 0; startX <= 25 - meldLength; startX++) {
+      // Try each starting position (leave room for padding on sides)
+      // Start at x=1 to ensure space on left, end at 24-meldLength to ensure space on right
+      for (let startX = 1; startX <= 24 - meldLength; startX++) {
         // Check if all positions in this range are available
         let allAvailable = true;
         for (let x = startX; x < startX + meldLength; x++) {
@@ -341,7 +342,12 @@ function App() {
             break;
           }
         }
-        if (allAvailable) {
+
+        // Also check for free space on left and right sides
+        const hasLeftSpace = isPositionAvailable(startX - 1, y);
+        const hasRightSpace = isPositionAvailable(startX + meldLength, y);
+
+        if (allAvailable && hasLeftSpace && hasRightSpace) {
           return { x: startX, y };
         }
       }
