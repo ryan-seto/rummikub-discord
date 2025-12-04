@@ -59,6 +59,8 @@ function App() {
   const [drawnTileId, setDrawnTileId] = useState<string | null>(null);
   const isSyncing = useRef(false);
   const isHandlingTimeout = useRef(false);
+  const turnStartTime = useRef<number>(0); // When we received the turn start message
+  const lastTurnEndTime = useRef<number>(0); // Track last turnEndTime to detect changes
 
   // useEffect(() => {
   //   // Grab the Discord proxy ticket from the URL
@@ -154,15 +156,11 @@ function App() {
       console.log('📥 Received server update:', gameState);
       isSyncing.current = true;
 
-      // Debug timer values
-      if (gameState.turnEndTime) {
-        const now = Date.now();
-        const remainingMs = gameState.turnEndTime - now;
-        const remainingSec = Math.floor(remainingMs / 1000);
-        console.log(`⏱️  Client received turnEndTime: ${new Date(gameState.turnEndTime).toISOString()}`);
-        console.log(`⏱️  Current client time: ${new Date(now).toISOString()}`);
-        console.log(`⏱️  Calculated remaining: ${remainingSec}s (${remainingMs}ms)`);
-        console.log(`⏱️  Configured duration: ${gameState.turnTimerDuration}s`);
+      // Track when we receive a new turn (turnEndTime changed)
+      if (gameState.turnEndTime && gameState.turnEndTime !== lastTurnEndTime.current) {
+        turnStartTime.current = Date.now();
+        lastTurnEndTime.current = gameState.turnEndTime;
+        console.log(`⏱️  New turn detected! Timer duration: ${gameState.turnTimerDuration}s, Started at: ${new Date(turnStartTime.current).toISOString()}`);
       }
 
       // Check for winner
@@ -228,14 +226,15 @@ function App() {
 
     const timer = setInterval(() => {
       const state = useGameStore.getState();
-      const { turnEndTime } = state;
+      const { turnTimerDuration } = state;
 
-      if (!turnEndTime) return;
-
-      // Calculate remaining time from server timestamp
+      // Calculate elapsed time since turn started (based on message receive time)
       const now = Date.now();
-      const remainingMs = Math.max(0, turnEndTime - now);
-      const remainingSec = Math.floor(remainingMs / 1000);
+      const elapsedMs = now - turnStartTime.current;
+      const elapsedSec = Math.floor(elapsedMs / 1000);
+
+      // Remaining = duration - elapsed
+      const remainingSec = Math.max(0, turnTimerDuration - elapsedSec);
 
       useGameStore.setState({
         turnTimeRemaining: remainingSec
