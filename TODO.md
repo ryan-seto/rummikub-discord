@@ -1,9 +1,5 @@
 Bugs:
 - end turn undo's everything even if the board is in a valid state need to update that
-- Timer resets to 1:01 instead of 1:00 for some reason
-- Tile drawing animation flashes at the screen
-- Variable timer does not broadcast properly 
-
 
 Features:
 - No way to restart game or start new game at the end, should be able to go back to lobby screen

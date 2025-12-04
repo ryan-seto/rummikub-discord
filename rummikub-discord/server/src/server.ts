@@ -75,9 +75,73 @@ app.use(express.json());
 
 // app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
-// Health check endpoint
+// Root endpoint
+app.get('/', (req: Request, res: Response) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>Rummikub Discord Server</title>
+        <style>
+          body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+          }
+          .status {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+          }
+          .pulse {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            background: #4ade80;
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+          }
+          @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+          }
+        </style>
+      </head>
+      <body>
+        <h1>🎮 Rummikub Discord Game Server</h1>
+        <div class="status">
+          <div class="pulse"></div>
+          <p><strong>Server Status:</strong> Online</p>
+          <p><strong>Uptime:</strong> ${Math.floor(process.uptime() / 60)} minutes</p>
+          <p><strong>Active Games:</strong> ${games.size}</p>
+        </div>
+        <p>This server powers the Rummikub Discord activity.</p>
+        <p><small>Health endpoint: <a href="/api/health" style="color: #a5f3fc;">/api/health</a></small></p>
+      </body>
+    </html>
+  `);
+});
+
+// Health check endpoint (for UptimeRobot and monitoring)
 app.get('/api/health', (req: Request, res: Response) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  const userAgent = req.headers['user-agent'] || 'unknown';
+  const isUptimeRobot = userAgent.toLowerCase().includes('uptimerobot');
+
+  if (isUptimeRobot) {
+    console.log('UptimeRobot health check ping');
+  }
+
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    activeGames: games.size,
+  });
 });
 
 // OAuth token exchange endpoint
