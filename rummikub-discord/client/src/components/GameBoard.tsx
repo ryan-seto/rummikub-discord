@@ -159,7 +159,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
       {tiles.map((tile) => (
         <div
           key={tile.id}
-          className="absolute flex items-center justify-center z-30"
+          className="absolute flex items-center justify-center z-30 animate-tile-place"
           style={{
             left: `${PADDING + tile.position.x * CELL_WIDTH}px`,
             top: `${PADDING + tile.position.y * CELL_HEIGHT}px`,

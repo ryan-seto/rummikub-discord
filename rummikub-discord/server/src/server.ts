@@ -154,6 +154,7 @@ interface ServerGameState {
   actionHistory: TurnAction[];
   hasDrawnThisTurn: boolean;
   turnEndTime: number; // Unix timestamp (ms) when current turn will end
+  turnTimerDuration: number; // Configured turn duration in seconds
 }
 
 interface TurnAction {
@@ -408,6 +409,7 @@ app.post('/api/games/init', (req: Request, res: Response) => {
     actionHistory: [],
     hasDrawnThisTurn: false,
     turnEndTime: 0, // Will be set when game starts
+    turnTimerDuration: TURN_TIME_SECONDS, // Default 60 seconds
   };
 
   games.set(gameId, gameState);
@@ -503,14 +505,19 @@ app.post('/api/games/:gameId/reset', (req: Request, res: Response) => {
 // Start game
 app.post('/api/games/:gameId/start', (req: Request, res: Response) => {
   const { gameId } = req.params;
+  const { turnTimer } = req.body; // Get turnTimer from request
   const game = games.get(gameId);
 
   if (!game) {
     return res.status(404).json({ error: 'Game not found' });
   }
 
+  // Use turnTimer from request, or fallback to default
+  const timerDuration = turnTimer || TURN_TIME_SECONDS;
+
   game.phase = 'playing';
-  game.turnEndTime = Date.now() + (TURN_TIME_SECONDS * 1000);
+  game.turnTimerDuration = timerDuration; // Store for future turns
+  game.turnEndTime = Date.now() + (timerDuration * 1000);
   games.set(gameId, game);
 
   console.log(`🎮 Game ${gameId} started`);
@@ -534,6 +541,7 @@ app.post('/api/games/:gameId/start', (req: Request, res: Response) => {
     canUndo: game.actionHistory.length > 0,
     canEndTurn: isBoardValidForEndTurn(game, currentPlayerId),
     turnEndTime: game.turnEndTime,
+    turnTimerDuration: game.turnTimerDuration,
   });
 
   res.json({ success: true });
@@ -681,6 +689,7 @@ app.post('/api/games/:gameId/place', (req: Request, res: Response) => {
     canUndo: game.actionHistory.length > 0,
     canEndTurn: isBoardValidForEndTurn(game, currentPlayerId),
     turnEndTime: game.turnEndTime,
+    turnTimerDuration: game.turnTimerDuration,
   });
 
   res.json({ success: true });
@@ -800,6 +809,7 @@ app.post('/api/games/:gameId/move', (req: Request, res: Response) => {
     canUndo: game.actionHistory.length > 0,
     canEndTurn: isBoardValidForEndTurn(game, currentPlayerId),
     turnEndTime: game.turnEndTime,
+    turnTimerDuration: game.turnTimerDuration,
   });
 
   res.json({ success: true });
@@ -962,7 +972,7 @@ app.post('/api/games/:gameId/draw', (req: Request, res: Response) => {
   game.currentPlayerIndex = (game.currentPlayerIndex + 1) % game.players.length;
   game.actionHistory = [];
   game.hasDrawnThisTurn = false;
-  game.turnEndTime = Date.now() + (TURN_TIME_SECONDS * 1000); // Set new turn timer
+  game.turnEndTime = Date.now() + (game.turnTimerDuration * 1000); // Set new turn timer
 
   games.set(gameId, game);
 
@@ -1346,7 +1356,7 @@ app.post('/api/games/:gameId/endturn', (req: Request, res: Response) => {
   game.currentPlayerIndex = (game.currentPlayerIndex + 1) % game.players.length;
   game.actionHistory = []; // Clear action history for next turn
   game.hasDrawnThisTurn = false; // Reset draw flag
-  game.turnEndTime = Date.now() + (TURN_TIME_SECONDS * 1000); // Set new turn timer
+  game.turnEndTime = Date.now() + (game.turnTimerDuration * 1000); // Set new turn timer
   games.set(gameId, game);
 
   console.log(`🔄 Turn ended, now player ${game.players[game.currentPlayerIndex].username}'s turn`);
@@ -1416,6 +1426,7 @@ app.post('/api/games/:gameId/undo', (req: Request, res: Response) => {
     canUndo: game.actionHistory.length > 0,
     canEndTurn: isBoardValidForEndTurn(game, currentPlayerId),
     turnEndTime: game.turnEndTime,
+    turnTimerDuration: game.turnTimerDuration,
   });
 
   res.json({ success: true, restoredTiles: tilesPlacedThisTurn });
@@ -1485,6 +1496,7 @@ app.post('/api/games/:gameId/undolast', (req: Request, res: Response) => {
     canUndo: game.actionHistory.length > 0,
     canEndTurn: isBoardValidForEndTurn(game, currentPlayerId),
     turnEndTime: game.turnEndTime,
+    turnTimerDuration: game.turnTimerDuration,
   });
 
   res.json({ success: true, undoneAction: lastAction });

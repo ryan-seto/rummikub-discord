@@ -102,3 +102,19 @@ body {
   animation: drawTilePath 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
   filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.5));
 }
+
+/* Tile placement animation - smooth fade and scale in */
+@keyframes tilePlacement {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-tile-place {
+  animation: tilePlacement 0.2s ease-out;
+}
