@@ -526,7 +526,7 @@ app.post('/api/games/:gameId/start', (req: Request, res: Response) => {
 
   // Broadcast to all clients in this game
   const currentPlayerId = game.players[game.currentPlayerIndex]?.id;
-  io.to(gameId).emit('game-state-update', {
+  const broadcastData = {
     phase: game.phase,
     players: game.players.map((p: any) => ({
       id: p.id,
@@ -544,7 +544,13 @@ app.post('/api/games/:gameId/start', (req: Request, res: Response) => {
     canEndTurn: isBoardValidForEndTurn(game, currentPlayerId),
     turnEndTime: game.turnEndTime,
     turnTimerDuration: game.turnTimerDuration,
+  };
+  console.log(`📤 START GAME - Broadcasting to ${gameId}:`, {
+    turnEndTime: new Date(broadcastData.turnEndTime).toISOString(),
+    turnTimerDuration: broadcastData.turnTimerDuration,
+    phase: broadcastData.phase
   });
+  io.to(gameId).emit('game-state-update', broadcastData);
 
   res.json({ success: true });
 });
@@ -982,7 +988,7 @@ app.post('/api/games/:gameId/draw', (req: Request, res: Response) => {
   console.log(`🔄 Turn automatically ended, now player ${game.currentPlayerIndex}'s turn`);
 
   // Broadcast turn change
-  io.to(gameId).emit('game-state-update', {
+  const drawBroadcastData = {
     phase: game.phase,
     players: game.players.map((p: any) => ({
       id: p.id,
@@ -998,7 +1004,14 @@ app.post('/api/games/:gameId/draw', (req: Request, res: Response) => {
     canDraw: true,
     canEndTurn: false,
     turnEndTime: game.turnEndTime,
+    turnTimerDuration: game.turnTimerDuration, // FIX: Was missing!
+  };
+  console.log(`📤 DRAW TILE - Broadcasting to ${gameId}:`, {
+    turnEndTime: new Date(drawBroadcastData.turnEndTime).toISOString(),
+    turnTimerDuration: drawBroadcastData.turnTimerDuration,
+    phase: drawBroadcastData.phase
   });
+  io.to(gameId).emit('game-state-update', drawBroadcastData);
 
   res.json({ tile: drawnTile });
 });
@@ -1364,7 +1377,7 @@ app.post('/api/games/:gameId/endturn', (req: Request, res: Response) => {
   console.log(`🔄 Turn ended, now player ${game.players[game.currentPlayerIndex].username}'s turn`);
 
   // Broadcast turn change
-  io.to(gameId).emit('game-state-update', {
+  const endTurnBroadcastData = {
     phase: game.phase,
     players: game.players.map((p: any) => ({
       id: p.id,
@@ -1380,7 +1393,14 @@ app.post('/api/games/:gameId/endturn', (req: Request, res: Response) => {
     canDraw: game.pool.length > 0,
     canEndTurn: false,
     turnEndTime: game.turnEndTime,
+    turnTimerDuration: game.turnTimerDuration,
+  };
+  console.log(`📤 END TURN - Broadcasting to ${gameId}:`, {
+    turnEndTime: new Date(endTurnBroadcastData.turnEndTime).toISOString(),
+    turnTimerDuration: endTurnBroadcastData.turnTimerDuration,
+    phase: endTurnBroadcastData.phase
   });
+  io.to(gameId).emit('game-state-update', endTurnBroadcastData);
 
   res.json({ success: true, nextPlayerIndex: game.currentPlayerIndex });
 });
