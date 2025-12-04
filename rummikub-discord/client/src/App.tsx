@@ -154,6 +154,17 @@ function App() {
       console.log('📥 Received server update:', gameState);
       isSyncing.current = true;
 
+      // Debug timer values
+      if (gameState.turnEndTime) {
+        const now = Date.now();
+        const remainingMs = gameState.turnEndTime - now;
+        const remainingSec = Math.floor(remainingMs / 1000);
+        console.log(`⏱️  Client received turnEndTime: ${new Date(gameState.turnEndTime).toISOString()}`);
+        console.log(`⏱️  Current client time: ${new Date(now).toISOString()}`);
+        console.log(`⏱️  Calculated remaining: ${remainingSec}s (${remainingMs}ms)`);
+        console.log(`⏱️  Configured duration: ${gameState.turnTimerDuration}s`);
+      }
+
       // Check for winner
       if (gameState.phase === 'ended' && gameState.winner) {
         setWinner(gameState.winner);

@@ -521,6 +521,8 @@ app.post('/api/games/:gameId/start', (req: Request, res: Response) => {
   games.set(gameId, game);
 
   console.log(`🎮 Game ${gameId} started`);
+  console.log(`⏱️  Received turnTimer: ${turnTimer}, Using: ${timerDuration}s`);
+  console.log(`⏱️  turnEndTime set to: ${new Date(game.turnEndTime).toISOString()}, Current time: ${new Date().toISOString()}`);
 
   // Broadcast to all clients in this game
   const currentPlayerId = game.players[game.currentPlayerIndex]?.id;
