@@ -597,6 +597,7 @@ function App() {
             players={players}
             currentPlayerIndex={currentPlayerIndex}
             myPlayerId={myPlayerId}
+            gamePhase={phase}
           />
 
           <PlayerList

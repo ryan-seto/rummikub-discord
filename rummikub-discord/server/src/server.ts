@@ -131,10 +131,10 @@ app.get('/', (req: Request, res: Response) => {
 app.get('/api/health', (req: Request, res: Response) => {
   const userAgent = req.headers['user-agent'] || 'unknown';
   const isUptimeRobot = userAgent.toLowerCase().includes('uptimerobot');
+  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
 
-  if (isUptimeRobot) {
-    console.log('UptimeRobot health check ping');
-  }
+  // Log ALL health checks so we can see UptimeRobot activity
+  console.log(`💓 Health check from ${isUptimeRobot ? 'UptimeRobot' : ip} - User-Agent: ${userAgent.substring(0, 50)}...`);
 
   res.json({
     status: 'ok',
@@ -219,6 +219,8 @@ interface ServerGameState {
   hasDrawnThisTurn: boolean;
   turnEndTime: number; // Unix timestamp (ms) when current turn will end
   turnTimerDuration: number; // Configured turn duration in seconds
+  lastActivity: number; // Unix timestamp (ms) of last player action
+  createdAt: number; // Unix timestamp (ms) when game was created
 }
 
 interface TurnAction {
@@ -236,6 +238,13 @@ const games = new Map<string, ServerGameState>();
 
 // Game constants
 const TURN_TIME_SECONDS = 60;
+const GAME_CLEANUP_INTERVAL = 2 * 60 * 1000; // Check every 2 minutes
+const GAME_INACTIVITY_TIMEOUT = 5 * 60 * 1000; // Clean up after 5 minutes of inactivity
+
+// Helper to update last activity timestamp
+function updateActivity(game: ServerGameState) {
+  game.lastActivity = Date.now();
+}
 
 function createTilePool() {
   const tiles = [];
@@ -432,11 +441,37 @@ app.post('/api/games/init', (req: Request, res: Response) => {
 
   // Check if game already exists - either reset or skip
   if (games.has(gameId)) {
+    const existingGame = games.get(gameId);
+
     if (reset) {
       console.log(`🔄 Resetting existing game ${gameId}`);
       games.delete(gameId);
+    } else if (existingGame && existingGame.phase === 'playing') {
+      // Check if any of the incoming players are existing players (rejoin)
+      const existingPlayerIds = existingGame.players.map(p => p.id);
+      const incomingPlayerIds = players.map((p: any) => p.id);
+      const isRejoin = incomingPlayerIds.some((id: string) => existingPlayerIds.includes(id));
+
+      if (isRejoin) {
+        // Existing player(s) rejoining - allow it
+        console.log(`🔄 Existing player(s) rejoining game ${gameId}`);
+        updateActivity(existingGame);
+        return res.json({ success: true, gameId, alreadyExists: true });
+      } else {
+        // New players trying to join mid-game - block them
+        console.log(`🚫 Blocked new player join attempt to in-progress game ${gameId}`);
+        return res.status(403).json({
+          error: 'Game already in progress',
+          message: 'A game is currently in progress. Please wait for it to finish before starting a new one.',
+          canRejoin: false
+        });
+      }
+    } else if (existingGame && existingGame.phase === 'ended') {
+      // Allow creating new game after previous one ended
+      console.log(`🔄 Previous game ended, creating new game ${gameId}`);
+      games.delete(gameId);
     } else {
-      console.log(`🎮 Game ${gameId} already exists, skipping initialization`);
+      console.log(`🎮 Game ${gameId} already exists (lobby), skipping initialization`);
       return res.json({ success: true, gameId, alreadyExists: true });
     }
   }
@@ -456,6 +491,7 @@ app.post('/api/games/init', (req: Request, res: Response) => {
 
   const pool = shuffled.slice(tileIndex);
 
+  const now = Date.now();
   const gameState: ServerGameState = {
     id: gameId,
     phase: 'lobby',
@@ -474,6 +510,8 @@ app.post('/api/games/init', (req: Request, res: Response) => {
     hasDrawnThisTurn: false,
     turnEndTime: 0, // Will be set when game starts
     turnTimerDuration: TURN_TIME_SECONDS, // Default 60 seconds
+    lastActivity: now,
+    createdAt: now,
   };
 
   games.set(gameId, gameState);
@@ -498,6 +536,7 @@ app.post('/api/games/:gameId/players/:playerId/ready', (req: Request, res: Respo
   }
 
   player.isReady = !player.isReady;
+  updateActivity(game);
   console.log(`✓ Player ${playerId} ready status: ${player.isReady}`);
 
   // Broadcast updated state to all clients in this channel
@@ -576,6 +615,8 @@ app.post('/api/games/:gameId/start', (req: Request, res: Response) => {
     return res.status(404).json({ error: 'Game not found' });
   }
 
+  updateActivity(game);
+
   // Use turnTimer from request, or fallback to default
   const timerDuration = turnTimer || TURN_TIME_SECONDS;
 
@@ -628,6 +669,8 @@ app.post('/api/games/:gameId/place', (req: Request, res: Response) => {
   if (!game) {
     return res.status(404).json({ error: 'Game not found' });
   }
+
+  updateActivity(game);
 
   // Check if it's this player's turn
   const currentPlayer = game.players[game.currentPlayerIndex];
@@ -776,6 +819,8 @@ app.post('/api/games/:gameId/move', (req: Request, res: Response) => {
   if (!game) {
     return res.status(404).json({ error: 'Game not found' });
   }
+
+  updateActivity(game);
 
   // Check if it's this player's turn
   const currentPlayer = game.players[game.currentPlayerIndex];
@@ -1010,6 +1055,8 @@ app.post('/api/games/:gameId/draw', (req: Request, res: Response) => {
   if (!game) {
     return res.status(404).json({ error: 'Game not found' });
   }
+
+  updateActivity(game);
 
   // Check if pool is empty
   if (game.pool.length === 0) {
@@ -1360,6 +1407,8 @@ app.post('/api/games/:gameId/endturn', (req: Request, res: Response) => {
     return res.status(404).json({ error: 'Game not found' });
   }
 
+  updateActivity(game);
+
   const currentPlayer = game.players[game.currentPlayerIndex];
 
   if (playerId && currentPlayer.id !== playerId) {
@@ -1479,6 +1528,8 @@ app.post('/api/games/:gameId/undo', (req: Request, res: Response) => {
     return res.status(404).json({ error: 'Game not found' });
   }
 
+  updateActivity(game);
+
   // Find tiles placed this turn
   const tilesPlacedThisTurn = game.board.filter(
     boardTile => !game.turnStartBoard.find((t: any) => t.id === boardTile.id)
@@ -1527,6 +1578,8 @@ app.post('/api/games/:gameId/undolast', (req: Request, res: Response) => {
   if (!game) {
     return res.status(404).json({ error: 'Game not found' });
   }
+
+  updateActivity(game);
 
   if (game.actionHistory.length === 0) {
     return res.status(400).json({ error: 'No actions to undo' });
@@ -1619,10 +1672,31 @@ io.on('connection', (socket) => {
   });
 });
 
+// Periodic cleanup for abandoned games
+setInterval(() => {
+  const now = Date.now();
+  let cleanedCount = 0;
+
+  games.forEach((game, gameId) => {
+    const inactiveTime = now - game.lastActivity;
+
+    if (inactiveTime > GAME_INACTIVITY_TIMEOUT) {
+      games.delete(gameId);
+      cleanedCount++;
+      console.log(`🗑️  Cleaned up abandoned game ${gameId} (inactive for ${Math.floor(inactiveTime / 60000)} minutes)`);
+    }
+  });
+
+  if (cleanedCount > 0) {
+    console.log(`🧹 Cleanup complete: removed ${cleanedCount} abandoned game(s)`);
+  }
+}, GAME_CLEANUP_INTERVAL);
+
 // Start server
 httpServer.listen(PORT, () => {
   console.log(`🚀 Server starting on port: ${PORT}`);
   console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`♻️  Game cleanup enabled: ${GAME_INACTIVITY_TIMEOUT / 60000} min timeout, checking every ${GAME_CLEANUP_INTERVAL / 60000} min`);
 });
 
 export default app;

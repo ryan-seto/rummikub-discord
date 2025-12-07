@@ -16,6 +16,7 @@ interface GameControlsProps {
   players: Player[];
   currentPlayerIndex: number;
   myPlayerId: string | null;
+  gamePhase: 'lobby' | 'playing' | 'ended';
 }
 
 export const GameControls: React.FC<GameControlsProps> = ({
@@ -33,9 +34,21 @@ export const GameControls: React.FC<GameControlsProps> = ({
   players,
   currentPlayerIndex,
   myPlayerId,
+  gamePhase,
 }) => {
   const minutes = Math.floor(timeRemaining / 60);
   const seconds = timeRemaining % 60;
+
+  const handleNewGame = () => {
+    // If game is actively being played, require confirmation
+    if (gamePhase === 'playing') {
+      const confirmed = window.confirm(
+        'Are you sure you want to start a new game? This will end the current game for all players.'
+      );
+      if (!confirmed) return;
+    }
+    onReset();
+  };
 
   return (
     <div className="bg-gray-800 rounded-lg p-2 shadow-lg space-y-2">
@@ -123,15 +136,15 @@ export const GameControls: React.FC<GameControlsProps> = ({
         </button>
       </div>
 
-      {/* Reset button (for testing) */}
+      {/* New Game button */}
       <div className="border-t border-gray-700 pt-2">
         <button
-          onClick={onReset}
+          onClick={handleNewGame}
           className="w-full py-1 px-3 rounded-lg font-semibold text-xs
             bg-red-600 hover:bg-red-700 text-white cursor-pointer
             transition-all duration-200"
         >
-          🔄 Reset
+          🎮 New Game
         </button>
       </div>
     </div>
