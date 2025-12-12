@@ -640,13 +640,20 @@ function App() {
             onUndoLast={handleUndoLastAction}
             onReset={async () => {
               console.log('🔄 onReset called, channelId:', channelId);
-              if (channelId) {
-                console.log('📤 Calling resetGame API...');
-                await resetGame(channelId);
-                console.log('🔄 Reloading page...');
+              if (channelId && participants) {
+                console.log('📤 Re-initializing game with reset flag...');
+                // Re-initialize the game instead of just deleting it
+                // This creates a new game for all players
+                const playersList = Array.from(participants.values()).map(p => ({
+                  id: p.id,
+                  username: p.username,
+                  avatar: `https://cdn.discordapp.com/avatars/${p.id}/${p.avatar}.png`,
+                }));
+                await initializeGame(channelId, playersList, true); // reset: true
+                console.log('✅ Game reset complete, reloading page...');
                 window.location.reload();
               } else {
-                console.warn('⚠️ No channelId available for reset');
+                console.warn('⚠️ No channelId or participants available for reset');
               }
             }}
             poolSize={pool.length}

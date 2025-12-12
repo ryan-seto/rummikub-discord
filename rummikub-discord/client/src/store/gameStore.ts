@@ -13,7 +13,7 @@ interface GameStore extends GameState {
   canEndTurn: boolean;
 
   // Actions now call server APIs
-  initializeGame: (channelId: string, players: Player[]) => Promise<void>;
+  initializeGame: (channelId: string, players: Player[], reset?: boolean) => Promise<void>;
   fetchMyHand: (channelId: string, playerId: string) => Promise<void>;
   startGame: (channelId: string, turnTimer?: number) => Promise<void>;
   drawTile: (channelId: string, playerId: string) => Promise<Tile>;
@@ -48,13 +48,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
   canEndTurn: false,
 
   // Initialize game on server
-  initializeGame: async (channelId: string, players: Player[]) => {
+  initializeGame: async (channelId: string, players: Player[], reset?: boolean) => {
     try {
-      console.log('🎮 Initializing game on server...');
+      console.log('🎮 Initializing game on server...', reset ? '(with reset)' : '');
       const response = await fetch('/api/games/init', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ channelId, players }),
+        body: JSON.stringify({ channelId, players, reset }),
       });
 
       if (!response.ok) {
