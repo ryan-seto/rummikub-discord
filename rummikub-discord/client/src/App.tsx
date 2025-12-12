@@ -392,6 +392,25 @@ function App() {
     }
   };
 
+  // Helper: Check if a meld has space around it (not touching other melds)
+  const meldHasSpace = (meldSetId: string): boolean => {
+    const meldTiles = getTilesInMeld(meldSetId);
+    if (meldTiles.length === 0) return true;
+
+    const sortedTiles = [...meldTiles].sort((a, b) => a.position.x - b.position.x);
+    const firstTile = sortedTiles[0];
+    const lastTile = sortedTiles[sortedTiles.length - 1];
+    const y = firstTile.position.y;
+
+    // Check if there's a tile immediately to the left or right that's NOT part of this meld
+    const leftTile = board.find(t => t.position.x === firstTile.position.x - 1 && t.position.y === y && t.setId !== meldSetId);
+    const rightTile = board.find(t => t.position.x === lastTile.position.x + 1 && t.position.y === y && t.setId !== meldSetId);
+
+    const hasSpace = !leftTile && !rightTile;
+    console.log(`🔍 Meld ${meldSetId} has space: ${hasSpace} (left: ${!leftTile}, right: ${!rightTile})`);
+    return hasSpace;
+  };
+
   const handleTileDrop = async (
     tile: Tile,
     position: { x: number; y: number },
@@ -494,6 +513,27 @@ function App() {
         // Placing new tile from hand
         console.log('🎴 Placing tile with setId:', setId, 'at position:', snappedPosition);
         await placeTile(channelId, myPlayerId, tile, snappedPosition, setId);
+
+        // After placing, check if the meld needs to be relocated (touching another meld)
+        if (setId) {
+          // Give a brief moment for the board state to update
+          setTimeout(async () => {
+            const needsRelocation = !meldHasSpace(setId);
+
+            if (needsRelocation) {
+              console.log('⚠️ Meld is touching another meld, relocating...');
+              const meldTiles = getTilesInMeld(setId);
+              const newLocation = findEmptySpaceForMeld(meldTiles.length);
+
+              if (newLocation) {
+                console.log(`✨ Relocating meld to new position (${newLocation.x}, ${newLocation.y})`);
+                await relocateMeld(meldTiles, newLocation);
+              } else {
+                console.warn('⚠️ No empty space found for meld relocation');
+              }
+            }
+          }, 300);
+        }
       }
     } catch (error: any) {
       console.error('Failed to place/move tile:', error);
