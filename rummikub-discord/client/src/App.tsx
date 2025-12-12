@@ -172,17 +172,37 @@ function App() {
       syncGameState(gameState);
 
       // After syncing state, check if we need to relocate the last placed meld
-      if (lastPlacedSetId.current && channelId) {
+      if (lastPlacedSetId.current && channelId && gameState.board) {
         const setIdToCheck = lastPlacedSetId.current;
         lastPlacedSetId.current = null; // Clear it immediately
 
         setTimeout(async () => {
-          const meldTiles = board.filter(t => t.setId === setIdToCheck);
+          // Use the NEW board state from gameState, not the old one from closure
+          const updatedBoard = gameState.board || [];
+          const meldTiles = updatedBoard.filter((t: TileOnBoard) => t.setId === setIdToCheck);
           if (meldTiles.length === 0) return; // Meld doesn't exist yet or was moved
 
-          const needsRelocation = !meldHasSpace(setIdToCheck);
+          const sortedTiles = [...meldTiles].sort((a, b) => a.position.x - b.position.x);
+          const firstTile = sortedTiles[0];
+          const lastTile = sortedTiles[sortedTiles.length - 1];
+          const y = firstTile.position.y;
 
-          if (needsRelocation) {
+          // Check if there's a tile immediately adjacent from a different meld
+          const leftTile = updatedBoard.find((t: TileOnBoard) =>
+            t.position.x === firstTile.position.x - 1 &&
+            t.position.y === y &&
+            t.setId !== setIdToCheck
+          );
+          const rightTile = updatedBoard.find((t: TileOnBoard) =>
+            t.position.x === lastTile.position.x + 1 &&
+            t.position.y === y &&
+            t.setId !== setIdToCheck
+          );
+
+          const hasSpace = !leftTile && !rightTile;
+          console.log(`🔍 Meld ${setIdToCheck} has space: ${hasSpace} (left: ${!leftTile}, right: ${!rightTile})`);
+
+          if (!hasSpace) {
             console.log('⚠️ Meld is touching another meld, relocating...');
             const newLocation = findEmptySpaceForMeld(meldTiles.length);
 
@@ -416,25 +436,6 @@ function App() {
       console.error('❌ Failed to relocate meld:', error);
       return false;
     }
-  };
-
-  // Helper: Check if a meld has space around it (not touching other melds)
-  const meldHasSpace = (meldSetId: string): boolean => {
-    const meldTiles = getTilesInMeld(meldSetId);
-    if (meldTiles.length === 0) return true;
-
-    const sortedTiles = [...meldTiles].sort((a, b) => a.position.x - b.position.x);
-    const firstTile = sortedTiles[0];
-    const lastTile = sortedTiles[sortedTiles.length - 1];
-    const y = firstTile.position.y;
-
-    // Check if there's a tile immediately to the left or right that's NOT part of this meld
-    const leftTile = board.find(t => t.position.x === firstTile.position.x - 1 && t.position.y === y && t.setId !== meldSetId);
-    const rightTile = board.find(t => t.position.x === lastTile.position.x + 1 && t.position.y === y && t.setId !== meldSetId);
-
-    const hasSpace = !leftTile && !rightTile;
-    console.log(`🔍 Meld ${meldSetId} has space: ${hasSpace} (left: ${!leftTile}, right: ${!rightTile})`);
-    return hasSpace;
   };
 
   const handleTileDrop = async (
