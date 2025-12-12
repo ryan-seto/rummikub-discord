@@ -61,6 +61,7 @@ function App() {
   const isHandlingTimeout = useRef(false);
   const turnStartTime = useRef<number>(0); // When we received the turn start message
   const lastTurnEndTime = useRef<number>(0); // Track last turnEndTime to detect changes
+  const lastPlacedSetId = useRef<string | null>(null); // Track the last placed meld for auto-relocation
 
   // useEffect(() => {
   //   // Grab the Discord proxy ticket from the URL
@@ -170,13 +171,38 @@ function App() {
 
       syncGameState(gameState);
 
+      // After syncing state, check if we need to relocate the last placed meld
+      if (lastPlacedSetId.current && channelId) {
+        const setIdToCheck = lastPlacedSetId.current;
+        lastPlacedSetId.current = null; // Clear it immediately
+
+        setTimeout(async () => {
+          const meldTiles = board.filter(t => t.setId === setIdToCheck);
+          if (meldTiles.length === 0) return; // Meld doesn't exist yet or was moved
+
+          const needsRelocation = !meldHasSpace(setIdToCheck);
+
+          if (needsRelocation) {
+            console.log('⚠️ Meld is touching another meld, relocating...');
+            const newLocation = findEmptySpaceForMeld(meldTiles.length);
+
+            if (newLocation) {
+              console.log(`✨ Relocating meld to new position (${newLocation.x}, ${newLocation.y})`);
+              await relocateMeld(meldTiles, newLocation);
+            } else {
+              console.warn('⚠️ No empty space found for meld relocation');
+            }
+          }
+        }, 100);
+      }
+
       setTimeout(() => {
         isSyncing.current = false;
       }, 500);
     });
 
     return cleanup;
-  }, [onGameStateUpdate, syncGameState]);
+  }, [onGameStateUpdate, syncGameState, board, channelId]);
 
   const isMyTurn = myPlayerId && players[currentPlayerIndex]?.id === myPlayerId;
 
@@ -514,25 +540,9 @@ function App() {
         console.log('🎴 Placing tile with setId:', setId, 'at position:', snappedPosition);
         await placeTile(channelId, myPlayerId, tile, snappedPosition, setId);
 
-        // After placing, check if the meld needs to be relocated (touching another meld)
+        // Mark this setId for relocation check after board state updates
         if (setId) {
-          // Give a brief moment for the board state to update
-          setTimeout(async () => {
-            const needsRelocation = !meldHasSpace(setId);
-
-            if (needsRelocation) {
-              console.log('⚠️ Meld is touching another meld, relocating...');
-              const meldTiles = getTilesInMeld(setId);
-              const newLocation = findEmptySpaceForMeld(meldTiles.length);
-
-              if (newLocation) {
-                console.log(`✨ Relocating meld to new position (${newLocation.x}, ${newLocation.y})`);
-                await relocateMeld(meldTiles, newLocation);
-              } else {
-                console.warn('⚠️ No empty space found for meld relocation');
-              }
-            }
-          }, 300);
+          lastPlacedSetId.current = setId;
         }
       }
     } catch (error: any) {
