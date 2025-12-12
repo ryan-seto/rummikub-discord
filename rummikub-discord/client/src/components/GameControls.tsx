@@ -40,13 +40,20 @@ export const GameControls: React.FC<GameControlsProps> = ({
   const seconds = timeRemaining % 60;
 
   const handleNewGame = () => {
+    console.log('🎮 New Game button clicked, current phase:', gamePhase);
+
     // If game is actively being played, require confirmation
     if (gamePhase === 'playing') {
       const confirmed = window.confirm(
         'Are you sure you want to start a new game? This will end the current game for all players.'
       );
-      if (!confirmed) return;
+      if (!confirmed) {
+        console.log('❌ User cancelled new game');
+        return;
+      }
     }
+
+    console.log('✅ Calling onReset...');
     onReset();
   };
 

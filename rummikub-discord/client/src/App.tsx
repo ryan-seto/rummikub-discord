@@ -639,9 +639,14 @@ function App() {
             onUndo={handleUndoTurn}
             onUndoLast={handleUndoLastAction}
             onReset={async () => {
+              console.log('🔄 onReset called, channelId:', channelId);
               if (channelId) {
+                console.log('📤 Calling resetGame API...');
                 await resetGame(channelId);
+                console.log('🔄 Reloading page...');
                 window.location.reload();
+              } else {
+                console.warn('⚠️ No channelId available for reset');
               }
             }}
             poolSize={pool.length}
