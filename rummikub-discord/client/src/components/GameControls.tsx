@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Player } from '../types/game';
 
 interface GameControlsProps {
@@ -38,23 +38,30 @@ export const GameControls: React.FC<GameControlsProps> = ({
 }) => {
   const minutes = Math.floor(timeRemaining / 60);
   const seconds = timeRemaining % 60;
+  const [showConfirmation, setShowConfirmation] = useState(false);
 
   const handleNewGame = () => {
     console.log('🎮 New Game button clicked, current phase:', gamePhase);
 
     // If game is actively being played, require confirmation
     if (gamePhase === 'playing') {
-      const confirmed = window.confirm(
-        'Are you sure you want to start a new game? This will end the current game for all players.'
-      );
-      if (!confirmed) {
-        console.log('❌ User cancelled new game');
-        return;
-      }
+      setShowConfirmation(true);
+      return;
     }
 
     console.log('✅ Calling onReset...');
     onReset();
+  };
+
+  const confirmNewGame = () => {
+    console.log('✅ User confirmed new game');
+    setShowConfirmation(false);
+    onReset();
+  };
+
+  const cancelNewGame = () => {
+    console.log('❌ User cancelled new game');
+    setShowConfirmation(false);
   };
 
   return (
@@ -154,6 +161,32 @@ export const GameControls: React.FC<GameControlsProps> = ({
           🎮 New Game
         </button>
       </div>
+
+      {/* Confirmation Modal */}
+      {showConfirmation && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-800 rounded-lg p-4 max-w-sm mx-4 border-2 border-red-500">
+            <h3 className="text-white font-bold text-lg mb-2">Start New Game?</h3>
+            <p className="text-gray-300 text-sm mb-4">
+              Are you sure you want to start a new game? This will end the current game for all players.
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={cancelNewGame}
+                className="flex-1 py-2 px-4 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmNewGame}
+                className="flex-1 py-2 px-4 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-all"
+              >
+                New Game
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
