@@ -661,10 +661,13 @@ function App() {
                 console.log('📤 Re-initializing game with reset flag...');
                 // Re-initialize the game instead of just deleting it
                 // This creates a new game for all players
-                const playersList = Array.from(participants.values()).map(p => ({
+                const playersList: Player[] = Array.from(participants.values()).map(p => ({
                   id: p.id,
                   username: p.username,
                   avatar: `https://cdn.discordapp.com/avatars/${p.id}/${p.avatar}.png`,
+                  tilesCount: 0,
+                  hasPlayedInitial: false,
+                  isReady: false,
                 }));
                 await initializeGame(channelId, playersList, true); // reset: true
                 console.log('✅ Game reset complete - waiting for server broadcast to reload...');
