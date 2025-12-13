@@ -226,12 +226,19 @@ function App() {
 
   // Listen for game reset events
   useEffect(() => {
+    console.log('🎧 Setting up game-reset listener...');
     const cleanup = onGameReset(() => {
-      console.log('🔄 Game reset event received, reloading page...');
-      window.location.reload();
+      console.log('🔄 Game reset event received from server!');
+      console.log('🔄 Reloading page in 500ms to ensure all players are notified...');
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
     });
 
-    return cleanup;
+    return () => {
+      console.log('🎧 Cleaning up game-reset listener');
+      cleanup();
+    };
   }, [onGameReset]);
 
   const isMyTurn = myPlayerId && players[currentPlayerIndex]?.id === myPlayerId;
@@ -660,8 +667,9 @@ function App() {
                   avatar: `https://cdn.discordapp.com/avatars/${p.id}/${p.avatar}.png`,
                 }));
                 await initializeGame(channelId, playersList, true); // reset: true
-                console.log('✅ Game reset complete, reloading page...');
-                window.location.reload();
+                console.log('✅ Game reset complete - waiting for server broadcast to reload...');
+                // Don't reload here - let the 'game-reset' event listener handle it
+                // This prevents double-reloading for the initiating player
               } else {
                 console.warn('⚠️ No channelId or participants available for reset');
               }
