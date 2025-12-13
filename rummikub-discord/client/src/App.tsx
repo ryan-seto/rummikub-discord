@@ -680,7 +680,7 @@ function App() {
                 const playersList: Player[] = Array.from(participants.values()).map(p => ({
                   id: p.id,
                   username: p.username,
-                  avatar: `https://cdn.discordapp.com/avatars/${p.id}/${p.avatar}.png`,
+                  avatar: p.avatar, // Use avatar directly from Discord SDK
                   tilesCount: 0,
                   hasPlayedInitial: false,
                   isReady: false,
