@@ -445,6 +445,8 @@ app.post('/api/games/init', (req: Request, res: Response) => {
 
     if (reset) {
       console.log(`🔄 Resetting existing game ${gameId}`);
+      // Notify all players that the game is being reset
+      io.to(gameId).emit('game-reset');
       games.delete(gameId);
     } else if (existingGame && existingGame.phase === 'playing') {
       // Check if any of the incoming players are existing players (rejoin)

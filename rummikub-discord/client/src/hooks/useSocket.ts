@@ -53,8 +53,20 @@ export function useSocket(channelId: string | null) {
     return () => { };
   };
 
+  const onGameReset = (callback: () => void) => {
+    if (socketRef.current) {
+      socketRef.current.on('game-reset', callback);
+
+      return () => {
+        socketRef.current?.off('game-reset', callback);
+      };
+    }
+    return () => { };
+  };
+
   return {
     socket: socketRef.current,
     onGameStateUpdate,
+    onGameReset,
   };
 }

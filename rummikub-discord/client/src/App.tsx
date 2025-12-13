@@ -15,7 +15,7 @@ import { WinnerScreen } from './components/WinnerScreen';
 
 function App() {
   const { user, participants, isReady, error, channelId } = useDiscordSDK();
-  const { onGameStateUpdate } = useSocket(channelId);
+  const { onGameStateUpdate, onGameReset } = useSocket(channelId);
   const [winner, setWinner] = useState<Player | null>(null);
 
   const {
@@ -223,6 +223,16 @@ function App() {
 
     return cleanup;
   }, [onGameStateUpdate, syncGameState, board, channelId]);
+
+  // Listen for game reset events
+  useEffect(() => {
+    const cleanup = onGameReset(() => {
+      console.log('🔄 Game reset event received, reloading page...');
+      window.location.reload();
+    });
+
+    return cleanup;
+  }, [onGameReset]);
 
   const isMyTurn = myPlayerId && players[currentPlayerIndex]?.id === myPlayerId;
 
