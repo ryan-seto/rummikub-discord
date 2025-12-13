@@ -445,12 +445,8 @@ app.post('/api/games/init', (req: Request, res: Response) => {
 
     if (reset) {
       console.log(`🔄 Resetting existing game ${gameId}`);
-      // Notify all players that the game is being reset
-      const socketsInRoom = io.sockets.adapter.rooms.get(gameId);
-      const clientCount = socketsInRoom ? socketsInRoom.size : 0;
-      console.log(`📤 Broadcasting game-reset to ${clientCount} client(s) in room ${gameId}`);
-      io.to(gameId).emit('game-reset');
       games.delete(gameId);
+      // Don't broadcast yet - we'll send the new game state after creating it
     } else if (existingGame && existingGame.phase === 'playing') {
       // Check if any of the incoming players are existing players (rejoin)
       const existingPlayerIds = existingGame.players.map(p => p.id);
@@ -522,6 +518,28 @@ app.post('/api/games/init', (req: Request, res: Response) => {
   games.set(gameId, gameState);
 
   console.log(`🎮 Game initialized for channel ${channelId} with ${players.length} players`);
+
+  // If this was a reset, broadcast the new game state to all players
+  if (reset) {
+    const socketsInRoom = io.sockets.adapter.rooms.get(gameId);
+    const clientCount = socketsInRoom ? socketsInRoom.size : 0;
+    console.log(`📤 Broadcasting new game state after reset to ${clientCount} client(s) in room ${gameId}`);
+    io.to(gameId).emit('game-reset', {
+      phase: gameState.phase,
+      players: gameState.players.map((p: any) => ({
+        id: p.id,
+        username: p.username,
+        avatar: p.avatar,
+        tilesCount: gameState.playerHands[p.id]?.length || 0,
+        hasPlayedInitial: p.hasPlayedInitial,
+        isReady: p.isReady,
+      })),
+      currentPlayerIndex: gameState.currentPlayerIndex,
+      board: gameState.board,
+      poolSize: gameState.pool.length,
+    });
+  }
+
   res.json({ success: true, gameId });
 });
 

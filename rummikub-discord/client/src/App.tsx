@@ -227,19 +227,35 @@ function App() {
   // Listen for game reset events
   useEffect(() => {
     console.log('🎧 Setting up game-reset listener...');
-    const cleanup = onGameReset(() => {
-      console.log('🔄 Game reset event received from server!');
-      console.log('🔄 Reloading page in 500ms to ensure all players are notified...');
-      setTimeout(() => {
-        window.location.reload();
-      }, 500);
+    const cleanup = onGameReset((newGameState: any) => {
+      console.log('🔄 Game reset event received from server!', newGameState);
+
+      // Reset the game state to lobby
+      useGameStore.setState({
+        id: channelId || '',
+        phase: GamePhase.LOBBY,
+        players: newGameState.players || [],
+        currentPlayerIndex: 0,
+        board: [],
+        pool: [], // Pool is not sent to client for security, just track size
+        turnStartBoard: [],
+        myHand: { tiles: [] },
+        canDraw: false,
+        canUndo: false,
+        canEndTurn: false,
+        turnEndTime: 0,
+        turnTimerDuration: 60,
+        turnTimeRemaining: 0,
+      });
+
+      console.log('✅ Game reset to lobby - ready for new game!');
     });
 
     return () => {
       console.log('🎧 Cleaning up game-reset listener');
       cleanup();
     };
-  }, [onGameReset]);
+  }, [onGameReset, channelId]);
 
   const isMyTurn = myPlayerId && players[currentPlayerIndex]?.id === myPlayerId;
 
