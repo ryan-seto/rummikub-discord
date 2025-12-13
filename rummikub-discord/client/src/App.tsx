@@ -92,7 +92,7 @@ function App() {
       // Convert Discord participants to game players
       const gamePlayers: Player[] = participants.map(p => ({
         id: p.id,
-        username: p.username,
+        username: (p as any).global_name || p.username, // Use display name if available
         avatar: p.avatar,
         tilesCount: 0,
         hasPlayedInitial: false,
@@ -103,7 +103,7 @@ function App() {
       if (!gamePlayers.find(p => p.id === user.id)) {
         gamePlayers.push({
           id: user.id,
-          username: user.username,
+          username: (user as any).global_name || user.username, // Use display name if available
           avatar: user.avatar,
           tilesCount: 0,
           hasPlayedInitial: false,
@@ -137,10 +137,10 @@ function App() {
       participants.forEach(participant => {
         const existingPlayer = players.find(p => p.id === participant.id);
         if (!existingPlayer) {
-          console.log('New player joined:', participant.username);
+          console.log('New player joined:', (participant as any).global_name || participant.username);
           addPlayer({
             id: participant.id,
-            username: participant.username,
+            username: (participant as any).global_name || participant.username, // Use display name if available
             avatar: participant.avatar,
             tilesCount: 0,
             hasPlayedInitial: false,
@@ -679,7 +679,7 @@ function App() {
                 // This creates a new game for all players
                 const playersList: Player[] = Array.from(participants.values()).map(p => ({
                   id: p.id,
-                  username: p.username,
+                  username: (p as any).global_name || p.username, // Use display name if available
                   avatar: p.avatar, // Use avatar directly from Discord SDK
                   tilesCount: 0,
                   hasPlayedInitial: false,
