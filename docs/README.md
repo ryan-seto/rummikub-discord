@@ -35,7 +35,7 @@ This is the landing page for the Rummikub Discord Activity project.
    - Branch: `main`
    - Folder: `/docs`
 5. Click **Save**
-6. Your site will be live at: `https://r5seto.github.io/rummikub-discord/`
+6. Your site will be live at: `https://ryan-seto.github.io/rummikub-discord/`
 
 ### Option 2: Using a gh-pages branch
 1. Install gh-pages:

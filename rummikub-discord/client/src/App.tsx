@@ -42,6 +42,7 @@ function App() {
     undoLastAction,
     resetGame,
     addPlayer,
+    removePlayer,
     toggleReady,
     syncGameState,
   } = useGameStore();
@@ -131,9 +132,12 @@ function App() {
     }
   }, [hasInitialized, channelId, myPlayerId, myHand.tiles.length, phase, fetchMyHand]);
 
-  // Listen for new participants joining
+  // Listen for participants joining or leaving
   useEffect(() => {
-    if (isReady && hasInitialized && participants.length > 0) {
+    if (isReady && hasInitialized) {
+      const participantIds = participants.map(p => p.id);
+
+      // Add new players
       participants.forEach(participant => {
         const existingPlayer = players.find(p => p.id === participant.id);
         if (!existingPlayer) {
@@ -148,8 +152,16 @@ function App() {
           });
         }
       });
+
+      // Remove players who left
+      players.forEach(player => {
+        if (!participantIds.includes(player.id)) {
+          console.log('Player left:', player.username);
+          removePlayer(player.id);
+        }
+      });
     }
-  }, [participants, players, addPlayer, isReady, hasInitialized]);
+  }, [participants, players, addPlayer, removePlayer, isReady, hasInitialized]);
 
   // Listen for server game state updates
   useEffect(() => {
