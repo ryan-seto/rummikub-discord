@@ -40,7 +40,7 @@ export const Lobby: React.FC<LobbyProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-slate-800 flex items-center justify-center p-4">
       <div className="max-w-2xl w-full bg-gray-800 rounded-2xl shadow-2xl p-6">
         {/* Title */}
         <div className="text-center mb-4">
@@ -101,7 +101,7 @@ export const Lobby: React.FC<LobbyProps> = ({
             </div>
           ) : (
             <div className="space-y-2">
-              {players.map((player, index) => {
+              {players.map((player) => {
                 const isMe = player.id === myPlayerId;
 
                 return (

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rummikub Discord Activity</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <main class="container">
+        <header>
+            <h1>Rummikub Discord Activity</h1>
+            <p class="subtitle">Real-time multiplayer tile-based game for Discord voice channels</p>
+            <div class="tech-stack">
+                <span class="tech-badge">React</span>
+                <span class="tech-badge">TypeScript</span>
+                <span class="tech-badge">Socket.IO</span>
+                <span class="tech-badge">Express</span>
+                <span class="tech-badge">Node.js</span>
+            </div>
+            <a href="https://github.com/r5seto/rummikub-discord" target="_blank" class="github-link">
+                View on GitHub →
+            </a>
+        </header>
+
+        <section class="intro">
+            <h2>About</h2>
+            <p>
+                This project is a real-time multiplayer implementation of Rummikub built as a Discord Activity.
+                Players can launch the game directly from Discord voice channels and play together seamlessly
+                without leaving the platform. The application handles all game logic server-side while providing
+                an intuitive drag-and-drop interface for tile manipulation.
+            </p>
+            <p>
+                Built with modern web technologies, the game features comprehensive validation of Rummikub rules,
+                including set formation, initial meld requirements, and turn-based gameplay with automatic time
+                management. The architecture supports multiple concurrent games with real-time synchronization
+                across all connected players.
+            </p>
+        </section>
+
+        <section class="features">
+            <h2>Key Features</h2>
+            <ul>
+                <li><strong>Real-Time Multiplayer:</strong> Support for 2-4 concurrent players with seamless WebSocket synchronization</li>
+                <li><strong>Turn-Based System:</strong> 60-second timer with undo/redo action history and player reconnect handling</li>
+                <li><strong>Smart Validation:</strong> Automatic meld validation with 30-point initial requirement and overlap detection</li>
+                <li><strong>Session Management:</strong> Automatic cleanup of abandoned games and seamless player rejoin functionality</li>
+            </ul>
+        </section>
+
+        <section class="media">
+            <h2>Gameplay</h2>
+            <div class="media-grid">
+                <!-- Replace these placeholders with your actual images/videos -->
+                <div class="media-item">
+                    <img src="screenshots/lobby.png" alt="Game Lobby" loading="lazy">
+                    <p class="caption">Lobby Screen - Players ready up before starting</p>
+                </div>
+                <div class="media-item">
+                    <img src="screenshots/gameplay.png" alt="Active Gameplay" loading="lazy">
+                    <p class="caption">Active Game - Drag and drop tiles to create melds</p>
+                </div>
+                <div class="media-item">
+                    <video controls poster="screenshots/video-thumbnail.png">
+                        <source src="videos/gameplay-demo.mp4" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                    <p class="caption">Full Gameplay Demo</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="architecture">
+            <h2>Technical Architecture</h2>
+            <h3>Frontend</h3>
+            <ul>
+                <li>React with TypeScript for type-safe component development</li>
+                <li>Zustand for centralized state management</li>
+                <li>Tailwind CSS for responsive UI design</li>
+                <li>Discord Embedded App SDK integration</li>
+            </ul>
+            <h3>Backend</h3>
+            <ul>
+                <li>Express.js server with RESTful API endpoints</li>
+                <li>Socket.IO for real-time game state synchronization</li>
+                <li>In-memory game state management with cleanup automation</li>
+                <li>Custom validation logic for Rummikub game rules</li>
+                <li>Health check endpoint with Uptime Robot integration to prevent server spin-down on free tier hosting</li>
+            </ul>
+        </section>
+
+        <section class="highlights">
+            <h2>Development Highlights</h2>
+            <ul>
+                <li>Engineered complex tile placement algorithm with automatic meld relocation to prevent overlaps</li>
+                <li>Implemented comprehensive undo/redo system with turn-level action history</li>
+                <li>Built custom confirmation modals to work within Discord's sandboxed iframe environment</li>
+                <li>Designed player rejoin logic to differentiate between existing players reconnecting and new mid-game joins</li>
+                <li>Created activity tracking system with automatic game cleanup after 5 minutes of inactivity</li>
+            </ul>
+        </section>
+    </main>
+</body>
+</html>
