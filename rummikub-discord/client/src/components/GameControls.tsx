@@ -41,26 +41,21 @@ export const GameControls: React.FC<GameControlsProps> = ({
   const [showConfirmation, setShowConfirmation] = useState(false);
 
   const handleNewGame = () => {
-    console.log('🎮 New Game button clicked, current phase:', gamePhase);
-
     // If game is actively being played, require confirmation
     if (gamePhase === 'playing') {
       setShowConfirmation(true);
       return;
     }
 
-    console.log('✅ Calling onReset...');
     onReset();
   };
 
   const confirmNewGame = () => {
-    console.log('✅ User confirmed new game');
     setShowConfirmation(false);
     onReset();
   };
 
   const cancelNewGame = () => {
-    console.log('❌ User cancelled new game');
     setShowConfirmation(false);
   };
 

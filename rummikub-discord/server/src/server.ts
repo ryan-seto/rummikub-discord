@@ -134,7 +134,7 @@ app.get('/api/health', (req: Request, res: Response) => {
   const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
 
   // Log ALL health checks so we can see UptimeRobot activity
-  console.log(`💓 Health check from ${isUptimeRobot ? 'UptimeRobot' : ip} - User-Agent: ${userAgent.substring(0, 50)}...`);
+  console.log(`Health check from ${isUptimeRobot ? 'UptimeRobot' : ip} - User-Agent: ${userAgent.substring(0, 50)}...`);
 
   res.json({
     status: 'ok',
@@ -172,16 +172,11 @@ app.post('/api/token', async (req: Request, res: Response) => {
       redirect_uri: redirectUri,
     });
 
-    console.log('Exchanging token with Discord for code:', code);
-    console.log('Token exchange parameters:', params.toString());
-
     const response = await fetch('https://discord.com/api/oauth2/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: params,
     });
-
-    console.log('Discord response status:', response.status);
 
     const data = await response.json() as { access_token?: string; error?: string; error_description?: string };
 
@@ -195,7 +190,6 @@ app.post('/api/token', async (req: Request, res: Response) => {
       return res.status(500).json({ error: 'Discord did not return an access token', details: data });
     }
 
-    console.log('Token exchange successful');
     res.json({ access_token: data.access_token });
 
   } catch (error) {
@@ -251,12 +245,11 @@ function createTilePool() {
   const colors = ['red', 'blue', 'yellow', 'black'];
   let id = 0;
 
-  // TESTING: Create only 1-5 instead of 1-13
   for (let set = 0; set < 2; set++) {
     for (const color of colors) {
       for (let num = 1; num <= 13; num++) {
         tiles.push({
-          id: `tile-${id++}`,  // ← This increments for each tile
+          id: `tile-${id++}`,
           number: num,
           color,
           isJoker: false,
@@ -375,11 +368,8 @@ function validateInitialMeld(board: any[], playerId: string, game: any): { valid
 
   // If player has already played initial meld, they're good
   if (player?.hasPlayedInitial) {
-    console.log(`✅ Player ${player.username} has already completed initial meld`);
     return { valid: true };
   }
-
-  console.log(`🔍 Checking initial meld for player ${player?.username}`);
 
   // Get tiles placed from hand this turn (from action history)
   const tilesPlacedThisTurn = game.actionHistory
@@ -387,18 +377,14 @@ function validateInitialMeld(board: any[], playerId: string, game: any): { valid
     .map((action: TurnAction) => action.tile.id);
 
   if (tilesPlacedThisTurn.length === 0) {
-    console.log(`❌ No tiles placed from hand this turn`);
     return { valid: false, message: 'Initial meld must be at least 30 points', totalValue: 0 };
   }
-
-  console.log(`📋 Tiles placed this turn: ${tilesPlacedThisTurn.length}`);
 
   // Group tiles into melds
   const meldGroups = groupTilesIntoMelds(board);
   const completeMelds = meldGroups.filter(meld => meld.length >= 3);
 
   if (completeMelds.length === 0) {
-    console.log(`❌ No complete melds found`);
     return { valid: false, message: 'Initial meld must be at least 30 points', totalValue: 0 };
   }
 
@@ -410,12 +396,9 @@ function validateInitialMeld(board: any[], playerId: string, game: any): { valid
 
     if (hasTileFromThisTurn && (isValidRun(meld) || isValidGroup(meld))) {
       const meldValue = calculateMeldValue(meld);
-      console.log(`  Meld with new tile(s): ${meld.map(t => `${t.number}-${t.color}`).join(', ')} = ${meldValue} points`);
       totalValue += meldValue;
     }
   });
-
-  console.log(`📊 Total meld value: ${totalValue} points`);
 
   if (totalValue < 30) {
     return {
@@ -425,7 +408,6 @@ function validateInitialMeld(board: any[], playerId: string, game: any): { valid
     };
   }
 
-  console.log(`✅ Initial meld requirement met with ${totalValue} points!`);
   return { valid: true, totalValue };
 }
 
@@ -444,7 +426,7 @@ app.post('/api/games/init', (req: Request, res: Response) => {
     const existingGame = games.get(gameId);
 
     if (reset) {
-      console.log(`🔄 Resetting existing game ${gameId}`);
+      console.log(`Resetting existing game ${gameId}`);
       games.delete(gameId);
       // Don't broadcast yet - we'll send the new game state after creating it
     } else if (existingGame && existingGame.phase === 'playing') {
@@ -455,12 +437,12 @@ app.post('/api/games/init', (req: Request, res: Response) => {
 
       if (isRejoin) {
         // Existing player(s) rejoining - allow it
-        console.log(`🔄 Existing player(s) rejoining game ${gameId}`);
+        console.log(`Existing player(s) rejoining game ${gameId}`);
         updateActivity(existingGame);
         return res.json({ success: true, gameId, alreadyExists: true });
       } else {
         // New players trying to join mid-game - block them
-        console.log(`🚫 Blocked new player join attempt to in-progress game ${gameId}`);
+        console.log(`Blocked new player join attempt to in-progress game ${gameId}`);
         return res.status(403).json({
           error: 'Game already in progress',
           message: 'A game is currently in progress. Please wait for it to finish before starting a new one.',
@@ -469,10 +451,10 @@ app.post('/api/games/init', (req: Request, res: Response) => {
       }
     } else if (existingGame && existingGame.phase === 'ended') {
       // Allow creating new game after previous one ended
-      console.log(`🔄 Previous game ended, creating new game ${gameId}`);
+      console.log(`Previous game ended, creating new game ${gameId}`);
       games.delete(gameId);
     } else {
-      console.log(`🎮 Game ${gameId} already exists (lobby), skipping initialization`);
+      console.log(`Game ${gameId} already exists (lobby), skipping initialization`);
       return res.json({ success: true, gameId, alreadyExists: true });
     }
   }
@@ -517,13 +499,13 @@ app.post('/api/games/init', (req: Request, res: Response) => {
 
   games.set(gameId, gameState);
 
-  console.log(`🎮 Game initialized for channel ${channelId} with ${players.length} players`);
+  console.log(`Game initialized for channel ${channelId} with ${players.length} players`);
 
   // If this was a reset, broadcast the new game state to all players
   if (reset) {
     const socketsInRoom = io.sockets.adapter.rooms.get(gameId);
     const clientCount = socketsInRoom ? socketsInRoom.size : 0;
-    console.log(`📤 Broadcasting new game state after reset to ${clientCount} client(s) in room ${gameId}`);
+    console.log(`Broadcasting new game state after reset to ${clientCount} client(s) in room ${gameId}`);
     io.to(gameId).emit('game-reset', {
       phase: gameState.phase,
       players: gameState.players.map((p: any) => ({
@@ -560,7 +542,6 @@ app.post('/api/games/:gameId/players/:playerId/ready', (req: Request, res: Respo
 
   player.isReady = !player.isReady;
   updateActivity(game);
-  console.log(`✓ Player ${playerId} ready status: ${player.isReady}`);
 
   // Broadcast updated state to all clients in this channel
   io.to(gameId).emit('game-state-update', {
@@ -617,7 +598,7 @@ app.post('/api/games/:gameId/reset', (req: Request, res: Response) => {
 
   if (games.has(gameId)) {
     games.delete(gameId);
-    console.log(`🔄 Game ${gameId} reset/deleted`);
+    console.log(`Game ${gameId} reset/deleted`);
 
     // Broadcast reset to all clients
     io.to(gameId).emit('game-reset');
@@ -648,9 +629,7 @@ app.post('/api/games/:gameId/start', (req: Request, res: Response) => {
   game.turnEndTime = Date.now() + (timerDuration * 1000);
   games.set(gameId, game);
 
-  console.log(`🎮 Game ${gameId} started`);
-  console.log(`⏱️  Received turnTimer: ${turnTimer}, Using: ${timerDuration}s`);
-  console.log(`⏱️  turnEndTime set to: ${new Date(game.turnEndTime).toISOString()}, Current time: ${new Date().toISOString()}`);
+  console.log(`Game ${gameId} started`);
 
   // Broadcast to all clients in this game
   const currentPlayerId = game.players[game.currentPlayerIndex]?.id;
@@ -673,11 +652,6 @@ app.post('/api/games/:gameId/start', (req: Request, res: Response) => {
     turnEndTime: game.turnEndTime,
     turnTimerDuration: game.turnTimerDuration,
   };
-  console.log(`📤 START GAME - Broadcasting to ${gameId}:`, {
-    turnEndTime: new Date(broadcastData.turnEndTime).toISOString(),
-    turnTimerDuration: broadcastData.turnTimerDuration,
-    phase: broadcastData.phase
-  });
   io.to(gameId).emit('game-state-update', broadcastData);
 
   res.json({ success: true });
@@ -698,11 +672,8 @@ app.post('/api/games/:gameId/place', (req: Request, res: Response) => {
   // Check if it's this player's turn
   const currentPlayer = game.players[game.currentPlayerIndex];
   if (playerId && currentPlayer.id !== playerId) {
-    console.log(`❌ Not player ${playerId}'s turn (current: ${currentPlayer.id})`);
     return res.status(403).json({ error: 'Not your turn' });
   }
-
-  console.log(`🎴 Attempting to place tile ${tile.number}-${tile.color} at position:`, position);
 
   // Check if position is already occupied
   const existingTileAtPosition = game.board.find(
@@ -710,7 +681,6 @@ app.post('/api/games/:gameId/place', (req: Request, res: Response) => {
   );
 
   if (existingTileAtPosition) {
-    console.log(`❌ Position (${position.x}, ${position.y}) already occupied`);
     return res.status(400).json({ error: 'Position already occupied' });
   }
 
@@ -721,13 +691,10 @@ app.post('/api/games/:gameId/place', (req: Request, res: Response) => {
     // This tile is joining an existing meld
     const updatedMeld = [...existingMeldTiles, { ...tile, position, setId }];
 
-    console.log(`🔍 Validating meld with new tile:`, updatedMeld.map(t => `${t.number}-${t.color} at x:${t.position.x}`));
-
     // Check if meld could be valid
     const isPossible = canBecomeValidMeld(updatedMeld);
 
     if (!isPossible) {
-      console.log(`❌ Invalid meld - tile ${tile.number}-${tile.color} doesn't fit`);
       return res.status(400).json({ error: 'Tile does not form a valid meld with existing tiles' });
     }
 
@@ -743,15 +710,10 @@ app.post('/api/games/:gameId/place', (req: Request, res: Response) => {
       const visualOrder = byPosition.map(t => t.number).join('-');
       const logicalOrder = byNumber.map(t => t.number).join('-');
 
-      console.log(`Visual order: ${visualOrder}, Logical order: ${logicalOrder}`);
-
       if (visualOrder !== logicalOrder) {
-        console.log(`❌ Visual order doesn't match numeric order`);
         return res.status(400).json({ error: 'Tiles must be placed in numeric order (left to right)' });
       }
     }
-
-    console.log(`✅ Valid meld with correct visual order!`);
   }
 
   // Remove from hand
@@ -777,11 +739,9 @@ app.post('/api/games/:gameId/place', (req: Request, res: Response) => {
 
   games.set(gameId, game);
 
-  console.log(`✅ Tile ${tile.number}-${tile.color} placed at (${position.x}, ${position.y})`);
-
   // Check for win condition after placing
   if (checkWinCondition(game, playerId)) {
-    console.log(`🎉 Player wins by placing last tile!`);
+    console.log(`Player wins by placing last tile!`);
     game.phase = 'ended';
 
     const winner = game.players.find((p: any) => p.id === playerId);
@@ -848,11 +808,8 @@ app.post('/api/games/:gameId/move', (req: Request, res: Response) => {
   // Check if it's this player's turn
   const currentPlayer = game.players[game.currentPlayerIndex];
   if (playerId && currentPlayer.id !== playerId) {
-    console.log(`❌ Not player ${playerId}'s turn (current: ${currentPlayer.id})`);
     return res.status(403).json({ error: 'Not your turn' });
   }
-
-  console.log(`🔄 Moving tile ${tileId} to position:`, newPosition);
 
   // Find the tile on the board
   const tileIndex = game.board.findIndex(t => t.id === tileId);
@@ -871,7 +828,6 @@ app.post('/api/games/:gameId/move', (req: Request, res: Response) => {
   );
 
   if (existingTileAtPosition) {
-    console.log(`❌ Position (${newPosition.x}, ${newPosition.y}) already occupied`);
     return res.status(400).json({ error: 'Position already occupied' });
   }
 
@@ -881,12 +837,9 @@ app.post('/api/games/:gameId/move', (req: Request, res: Response) => {
   if (existingMeldTiles.length > 0) {
     const updatedMeld = [...existingMeldTiles, { ...tile, position: newPosition, setId: newSetId }];
 
-    console.log(`🔍 Validating meld after move:`, updatedMeld.map(t => `${t.number}-${t.color} at x:${t.position.x}`));
-
     const isPossible = canBecomeValidMeld(updatedMeld);
 
     if (!isPossible) {
-      console.log(`❌ Invalid meld after move`);
       return res.status(400).json({ error: 'Tile does not form a valid meld at new position' });
     }
 
@@ -899,10 +852,7 @@ app.post('/api/games/:gameId/move', (req: Request, res: Response) => {
       const visualOrder = byPosition.map(t => t.number).join('-');
       const logicalOrder = byNumber.map(t => t.number).join('-');
 
-      console.log(`Visual order: ${visualOrder}, Logical order: ${logicalOrder}`);
-
       if (visualOrder !== logicalOrder) {
-        console.log(`❌ Visual order doesn't match numeric order`);
         return res.status(400).json({ error: 'Tiles must be placed in numeric order (left to right)' });
       }
     }
@@ -927,8 +877,6 @@ app.post('/api/games/:gameId/move', (req: Request, res: Response) => {
   });
 
   games.set(gameId, game);
-
-  console.log(`✅ Tile ${tile.number}-${tile.color} moved to (${newPosition.x}, ${newPosition.y})`);
 
   // Broadcast updated board
   const currentPlayerId = game.players[game.currentPlayerIndex]?.id;
@@ -957,13 +905,9 @@ app.post('/api/games/:gameId/move', (req: Request, res: Response) => {
 
 // Check if tiles COULD become a valid run or group
 function canBecomeValidMeld(tiles: any[]): boolean {
-  console.log('🔍 Checking tiles:', tiles.map(t => t.isJoker ? 'JOKER' : `${t.number}-${t.color}`));
-
   // Separate jokers from regular tiles
   const jokers = tiles.filter(t => t.isJoker);
   const regularTiles = tiles.filter(t => !t.isJoker);
-
-  console.log(`Found ${jokers.length} joker(s) and ${regularTiles.length} regular tile(s)`);
 
   // If all jokers, can become anything
   if (regularTiles.length === 0) {
@@ -974,15 +918,11 @@ function canBecomeValidMeld(tiles: any[]): boolean {
   const allSameColor = regularTiles.every(t => t.color === regularTiles[0].color);
 
   if (allSameColor) {
-    console.log('✓ All same color - checking for run...');
-
     const numbers = regularTiles.map(t => t.number).sort((a, b) => a - b);
-    console.log('Numbers sorted:', numbers);
 
     // Check for duplicates in regular tiles
     const uniqueNumbers = new Set(numbers);
     if (uniqueNumbers.size !== numbers.length) {
-      console.log('✗ Has duplicate numbers, checking if group...');
       return canBecomeValidGroup(regularTiles, jokers.length);
     }
 
@@ -991,11 +931,8 @@ function canBecomeValidMeld(tiles: any[]): boolean {
     const maxNum = numbers[numbers.length - 1];
     const span = maxNum - minNum + 1;
 
-    console.log(`Min: ${minNum}, Max: ${maxNum}, Span: ${span}, Regular tiles: ${regularTiles.length}`);
-
     // Span can't exceed 13 (max run length)
     if (span > 13) {
-      console.log('✗ Span exceeds 13');
       return false;
     }
 
@@ -1004,14 +941,10 @@ function canBecomeValidMeld(tiles: any[]): boolean {
     for (let i = 1; i < numbers.length; i++) {
       const gap = numbers[i] - numbers[i - 1] - 1;
       gapsNeeded += gap;
-      console.log(`Gap between ${numbers[i - 1]} and ${numbers[i]}: ${gap}`);
     }
-
-    console.log(`Gaps needed: ${gapsNeeded}, Jokers available: ${jokers.length}`);
 
     // Check if we have enough jokers to fill gaps
     if (gapsNeeded > jokers.length) {
-      console.log('✗ Not enough jokers to fill gaps');
       return false;
     }
 
@@ -1024,17 +957,14 @@ function canBecomeValidMeld(tiles: any[]): boolean {
       const maxAllowedGap = jokers.length >= (gap - 1) ? gap : 2;
 
       if (gap > maxAllowedGap) {
-        console.log('✗ Gap too large even with jokers');
         return false;
       }
     }
 
-    console.log('✓ Could become valid run with jokers');
     return true;
   }
 
   // Check if it could become a valid group
-  console.log('Different colors, checking if group...');
   return canBecomeValidGroup(regularTiles, jokers.length);
 }
 
@@ -1083,7 +1013,6 @@ app.post('/api/games/:gameId/draw', (req: Request, res: Response) => {
 
   // Check if pool is empty
   if (game.pool.length === 0) {
-    console.log('❌ Pool is empty, cannot draw');
     return res.status(400).json({ error: 'No tiles left in pool' });
   }
 
@@ -1100,7 +1029,6 @@ app.post('/api/games/:gameId/draw', (req: Request, res: Response) => {
     });
 
     if (!allTilesInValidMelds) {
-      console.log('❌ Cannot draw - board must have all valid melds');
       return res.status(400).json({ error: 'Board has incomplete melds. Fix them or undo your turn before drawing.' });
     }
   }
@@ -1117,9 +1045,6 @@ app.post('/api/games/:gameId/draw', (req: Request, res: Response) => {
   game.turnEndTime = Date.now() + (game.turnTimerDuration * 1000); // Set new turn timer
 
   games.set(gameId, game);
-
-  console.log(`🎴 Player ${playerId} drew a tile`);
-  console.log(`🔄 Turn automatically ended, now player ${game.currentPlayerIndex}'s turn`);
 
   // Broadcast turn change
   const drawBroadcastData = {
@@ -1138,13 +1063,8 @@ app.post('/api/games/:gameId/draw', (req: Request, res: Response) => {
     canDraw: true,
     canEndTurn: false,
     turnEndTime: game.turnEndTime,
-    turnTimerDuration: game.turnTimerDuration, // FIX: Was missing!
+    turnTimerDuration: game.turnTimerDuration,
   };
-  console.log(`📤 DRAW TILE - Broadcasting to ${gameId}:`, {
-    turnEndTime: new Date(drawBroadcastData.turnEndTime).toISOString(),
-    turnTimerDuration: drawBroadcastData.turnTimerDuration,
-    phase: drawBroadcastData.phase
-  });
   io.to(gameId).emit('game-state-update', drawBroadcastData);
 
   res.json({ tile: drawnTile });
@@ -1198,11 +1118,9 @@ function isBoardValidForEndTurn(game: ServerGameState, playerId: string): boolea
   }
 
   // Player placed tiles from hand - validate board state
-  console.log(`🔍 Validating board state for end turn...`);
 
   // Empty board shouldn't happen if tiles were placed, but handle it
   if (game.board.length === 0) {
-    console.log(`❌ Board is empty`);
     return false;
   }
 
@@ -1210,28 +1128,12 @@ function isBoardValidForEndTurn(game: ServerGameState, playerId: string): boolea
   const meldGroups = groupTilesIntoMelds(game.board);
   const completeMelds = meldGroups.filter(meld => meld.length >= 3);
 
-  console.log(`📋 Found ${completeMelds.length} complete melds`);
-  completeMelds.forEach((meld, idx) => {
-    const isRun = isValidRun(meld);
-    const isGroup = isValidGroup(meld);
-    console.log(`  Meld ${idx + 1}: [${meld.map(t => t.isJoker ? 'JOKER' : `${t.number}-${t.color}`).join(', ')}] - Run: ${isRun}, Group: ${isGroup}`);
-  });
-
   // Check all complete melds are valid
   const allValid = completeMelds.every(meld => {
-    const isRun = isValidRun(meld, true);  // Enable debug logging
-    const isGroup = isValidGroup(meld, true);  // Enable debug logging
-    const isValid = isRun || isGroup;
-
-    if (!isValid) {
-      console.log(`  ❌ INVALID MELD: [${meld.map(t => t.isJoker ? 'JOKER' : `${t.number}-${t.color}`).join(', ')}] - Not a valid run or group`);
-    }
-
-    return isValid;
+    return isValidRun(meld) || isValidGroup(meld);
   });
 
   if (!allValid) {
-    console.log(`❌ Not all melds are valid`);
     return false;
   }
 
@@ -1240,17 +1142,14 @@ function isBoardValidForEndTurn(game: ServerGameState, playerId: string): boolea
   const tilesInCompleteMelds = completeMelds.reduce((count, meld) => count + meld.length, 0);
 
   if (tilesInCompleteMelds !== game.board.length) {
-    console.log(`❌ Some tiles are not in complete melds (${tilesInCompleteMelds} in melds vs ${game.board.length} total)`);
     return false;
   }
 
-  console.log(`✅ All ${game.board.length} tiles are in valid melds`);
   return true;
 }
 
-function isValidRun(tiles: any[], debug = false) {
+function isValidRun(tiles: any[]) {
   if (tiles.length < 3) {
-    if (debug) console.log(`    ❌ Run check: Too few tiles (${tiles.length} < 3)`);
     return false;
   }
 
@@ -1259,15 +1158,12 @@ function isValidRun(tiles: any[], debug = false) {
 
   // If only jokers, valid if reasonable size
   if (regularTiles.length === 0) {
-    const isValid = jokers.length >= 3 && jokers.length <= 13;
-    if (debug) console.log(`    ${isValid ? '✓' : '❌'} Run check: All jokers (${jokers.length} tiles)`);
-    return isValid;
+    return jokers.length >= 3 && jokers.length <= 13;
   }
 
   // All regular tiles must be same color
   const color = regularTiles[0].color;
   if (!color || regularTiles.some(t => t.color !== color)) {
-    if (debug) console.log(`    ❌ Run check: Not all same color (expected ${color})`);
     return false;
   }
 
@@ -1285,9 +1181,6 @@ function isValidRun(tiles: any[], debug = false) {
     // Check that regular tiles are in ascending numeric order visually
     for (let i = 1; i < numbersInVisualOrder.length; i++) {
       if (numbersInVisualOrder[i] <= numbersInVisualOrder[i - 1]) {
-        if (debug) {
-          console.log(`    ❌ Run check: Tiles not in ascending visual order [${numbersInVisualOrder.join(', ')}]`);
-        }
         return false;
       }
     }
@@ -1299,7 +1192,6 @@ function isValidRun(tiles: any[], debug = false) {
   // No duplicates allowed in regular tiles
   const uniqueNumbers = new Set(numbers);
   if (uniqueNumbers.size !== numbers.length) {
-    if (debug) console.log(`    ❌ Run check: Has duplicate numbers [${numbers.join(', ')}]`);
     return false;
   }
 
@@ -1318,9 +1210,6 @@ function isValidRun(tiles: any[], debug = false) {
   // Check if we have enough jokers to fill the gaps
   if (jokers.length < gapsInRegularTiles) {
     // Not enough jokers to fill gaps between regular tiles
-    if (debug) {
-      console.log(`    ❌ Run check: Not enough jokers (${jokers.length}) to fill gaps (${gapsInRegularTiles}) between regular tiles`);
-    }
     return false;
   }
 
@@ -1334,9 +1223,6 @@ function isValidRun(tiles: any[], debug = false) {
 
   // Sequence length can't exceed 13
   if (totalSequenceLength > 13) {
-    if (debug) {
-      console.log(`    ❌ Run check: Total sequence length (${totalSequenceLength}) exceeds 13`);
-    }
     return false;
   }
 
@@ -1353,21 +1239,14 @@ function isValidRun(tiles: any[], debug = false) {
   const canSplit = (minNum - Math.floor(jokersExtending / 2)) >= 1 && (maxNum + Math.ceil(jokersExtending / 2)) <= 13;
 
   if (!canExtendLeft && !canExtendRight && !canSplit) {
-    if (debug) {
-      console.log(`    ❌ Run check: No valid extension possible. Min possible: ${minPossibleStart}, Max possible: ${maxPossibleEnd}`);
-    }
     return false;
   }
 
-  if (debug) {
-    console.log(`    ✓ Run check: ${tiles.length} tiles, regular span ${spanOfRegularTiles} (${minNum}-${maxNum}), ${gapsInRegularTiles} gaps, ${jokers.length} jokers (${jokersFillingGaps} filling gaps, ${jokersExtending} extending)`);
-  }
   return true;
 }
 
-function isValidGroup(tiles: any[], debug = false) {
+function isValidGroup(tiles: any[]) {
   if (tiles.length < 3 || tiles.length > 4) {
-    if (debug) console.log(`    ❌ Group check: Invalid tile count (${tiles.length}, need 3-4)`);
     return false;
   }
 
@@ -1376,15 +1255,12 @@ function isValidGroup(tiles: any[], debug = false) {
 
   // If only jokers, valid if 3-4 jokers
   if (regularTiles.length === 0) {
-    const isValid = jokers.length >= 3 && jokers.length <= 4;
-    if (debug) console.log(`    ${isValid ? '✓' : '❌'} Group check: All jokers (${jokers.length} tiles)`);
-    return isValid;
+    return jokers.length >= 3 && jokers.length <= 4;
   }
 
   // All regular tiles must be same number
   const number = regularTiles[0].number;
   if (regularTiles.some(t => t.number !== number)) {
-    if (debug) console.log(`    ❌ Group check: Not all same number (expected ${number})`);
     return false;
   }
 
@@ -1392,17 +1268,14 @@ function isValidGroup(tiles: any[], debug = false) {
   const colors = regularTiles.map(t => t.color);
   const uniqueColors = new Set(colors);
   if (uniqueColors.size !== colors.length) {
-    if (debug) console.log(`    ❌ Group check: Has duplicate colors [${colors.join(', ')}]`);
     return false;
   }
 
   // Check total tiles don't exceed 4 (max colors)
   if (tiles.length > 4) {
-    if (debug) console.log(`    ❌ Group check: Too many tiles (${tiles.length} > 4)`);
     return false;
   }
 
-  if (debug) console.log(`    ✓ Group check: Valid group of ${number}s with ${jokers.length} jokers`);
   return true;
 }
 
@@ -1446,7 +1319,6 @@ app.post('/api/games/:gameId/endturn', (req: Request, res: Response) => {
   const allValid = completeMelds.every(meld => isValidRun(meld) || isValidGroup(meld));
 
   if (!allValid) {
-    console.log('❌ Invalid board configuration');
     return res.status(400).json({ error: 'Invalid board configuration - fix melds before ending turn' });
   }
 
@@ -1457,7 +1329,6 @@ app.post('/api/games/:gameId/endturn', (req: Request, res: Response) => {
   });
 
   if (!allValid || !allTilesInValidMelds) {
-    console.log('❌ Board has incomplete or invalid melds');
     return res.status(400).json({ error: 'All tiles must be in valid melds of 3+ tiles' });
   }
 
@@ -1466,7 +1337,6 @@ app.post('/api/games/:gameId/endturn', (req: Request, res: Response) => {
     const initialMeldCheck = validateInitialMeld(game.board, currentPlayer.id, game);
 
     if (!initialMeldCheck.valid) {
-      console.log(`❌ Initial meld check failed: ${initialMeldCheck.message}`);
       return res.status(400).json({
         error: initialMeldCheck.message,
         totalValue: initialMeldCheck.totalValue
@@ -1475,12 +1345,12 @@ app.post('/api/games/:gameId/endturn', (req: Request, res: Response) => {
 
     // Mark player as having completed initial meld
     currentPlayer.hasPlayedInitial = true;
-    console.log(`✅ Player ${currentPlayer.username} completed initial meld (${initialMeldCheck.totalValue} points)`);
+    console.log(`Player ${currentPlayer.username} completed initial meld (${initialMeldCheck.totalValue} points)`);
   }
 
   // Check for win condition - player has no tiles left
   if (game.playerHands[currentPlayer.id]?.length === 0) {
-    console.log(`🎉 Player ${currentPlayer.username} wins! No tiles remaining.`);
+    console.log(`Player ${currentPlayer.username} wins! No tiles remaining.`);
     game.phase = 'ended';
 
     // Broadcast game end
@@ -1510,8 +1380,6 @@ app.post('/api/games/:gameId/endturn', (req: Request, res: Response) => {
   game.turnEndTime = Date.now() + (game.turnTimerDuration * 1000); // Set new turn timer
   games.set(gameId, game);
 
-  console.log(`🔄 Turn ended, now player ${game.players[game.currentPlayerIndex].username}'s turn`);
-
   // Broadcast turn change
   const endTurnBroadcastData = {
     phase: game.phase,
@@ -1531,11 +1399,6 @@ app.post('/api/games/:gameId/endturn', (req: Request, res: Response) => {
     turnEndTime: game.turnEndTime,
     turnTimerDuration: game.turnTimerDuration,
   };
-  console.log(`📤 END TURN - Broadcasting to ${gameId}:`, {
-    turnEndTime: new Date(endTurnBroadcastData.turnEndTime).toISOString(),
-    turnTimerDuration: endTurnBroadcastData.turnTimerDuration,
-    phase: endTurnBroadcastData.phase
-  });
   io.to(gameId).emit('game-state-update', endTurnBroadcastData);
 
   res.json({ success: true, nextPlayerIndex: game.currentPlayerIndex });
@@ -1563,9 +1426,6 @@ app.post('/api/games/:gameId/undo', (req: Request, res: Response) => {
   game.board = [...game.turnStartBoard];
   game.actionHistory = [];
   games.set(gameId, game);
-
-  console.log(`↩️ Player ${playerId} undid their turn`);
-  console.log(`📋 Action history cleared: ${game.actionHistory.length} actions`);
 
   // Broadcast undo
   const currentPlayerId = game.players[game.currentPlayerIndex]?.id;
@@ -1611,8 +1471,6 @@ app.post('/api/games/:gameId/undolast', (req: Request, res: Response) => {
   // Get last action
   const lastAction = game.actionHistory.pop()!;
 
-  console.log(`↩️ Undoing last action:`, lastAction);
-
   if (lastAction.type === 'place' && lastAction.fromHand) {
     // Remove tile from board and return to hand
     game.board = game.board.filter(t => t.id !== lastAction.tile.id);
@@ -1622,8 +1480,6 @@ app.post('/api/games/:gameId/undolast', (req: Request, res: Response) => {
       color: lastAction.tile.color,
       isJoker: lastAction.tile.isJoker
     });
-
-    console.log(`Removed tile from board, returned to hand`);
   } else if (lastAction.type === 'move') {
     // Move tile back to original position
     const tileIndex = game.board.findIndex(t => t.id === lastAction.tile.id);
@@ -1633,7 +1489,6 @@ app.post('/api/games/:gameId/undolast', (req: Request, res: Response) => {
         position: lastAction.fromPosition!,
         setId: lastAction.oldSetId!
       };
-      console.log(`Moved tile back to original position`);
     }
   }
 
@@ -1706,20 +1561,20 @@ setInterval(() => {
     if (inactiveTime > GAME_INACTIVITY_TIMEOUT) {
       games.delete(gameId);
       cleanedCount++;
-      console.log(`🗑️  Cleaned up abandoned game ${gameId} (inactive for ${Math.floor(inactiveTime / 60000)} minutes)`);
+      console.log(`Cleaned up abandoned game ${gameId} (inactive for ${Math.floor(inactiveTime / 60000)} minutes)`);
     }
   });
 
   if (cleanedCount > 0) {
-    console.log(`🧹 Cleanup complete: removed ${cleanedCount} abandoned game(s)`);
+    console.log(`Cleanup complete: removed ${cleanedCount} abandoned game(s)`);
   }
 }, GAME_CLEANUP_INTERVAL);
 
 // Start server
 httpServer.listen(PORT, () => {
-  console.log(`🚀 Server starting on port: ${PORT}`);
-  console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`♻️  Game cleanup enabled: ${GAME_INACTIVITY_TIMEOUT / 60000} min timeout, checking every ${GAME_CLEANUP_INTERVAL / 60000} min`);
+  console.log(`Server starting on port: ${PORT}`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`Game cleanup enabled: ${GAME_INACTIVITY_TIMEOUT / 60000} min timeout, checking every ${GAME_CLEANUP_INTERVAL / 60000} min`);
 });
 
 export default app;

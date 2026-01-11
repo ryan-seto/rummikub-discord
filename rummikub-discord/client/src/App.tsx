@@ -116,7 +116,6 @@ function App() {
 
       // ALL players try to initialize (server will handle if already exists)
       if (gamePlayers.length >= 2) {
-        console.log('🎮 Initializing/joining game on server');
         initializeGame(channelId, gamePlayers);
       }
 
@@ -127,7 +126,6 @@ function App() {
   // Fetch player's hand after game is initialized
   useEffect(() => {
     if (hasInitialized && channelId && myPlayerId && myHand.tiles.length === 0 && phase === GamePhase.PLAYING) {
-      console.log('🎴 Fetching my hand from server');
       fetchMyHand(channelId, myPlayerId);
     }
   }, [hasInitialized, channelId, myPlayerId, myHand.tiles.length, phase, fetchMyHand]);
@@ -141,7 +139,6 @@ function App() {
       participants.forEach(participant => {
         const existingPlayer = players.find(p => p.id === participant.id);
         if (!existingPlayer) {
-          console.log('New player joined:', (participant as any).global_name || participant.username);
           addPlayer({
             id: participant.id,
             username: (participant as any).global_name || participant.username, // Use display name if available
@@ -156,7 +153,6 @@ function App() {
       // Remove players who left
       players.forEach(player => {
         if (!participantIds.includes(player.id)) {
-          console.log('Player left:', player.username);
           removePlayer(player.id);
         }
       });
@@ -166,14 +162,12 @@ function App() {
   // Listen for server game state updates
   useEffect(() => {
     const cleanup = onGameStateUpdate((gameState) => {
-      console.log('📥 Received server update:', gameState);
       isSyncing.current = true;
 
       // Track when we receive a new turn (turnEndTime changed)
       if (gameState.turnEndTime && gameState.turnEndTime !== lastTurnEndTime.current) {
         turnStartTime.current = Date.now();
         lastTurnEndTime.current = gameState.turnEndTime;
-        console.log(`⏱️  New turn detected! Timer duration: ${gameState.turnTimerDuration}s, Started at: ${new Date(turnStartTime.current).toISOString()}`);
       }
 
       // Check for winner
@@ -212,17 +206,12 @@ function App() {
           );
 
           const hasSpace = !leftTile && !rightTile;
-          console.log(`🔍 Meld ${setIdToCheck} has space: ${hasSpace} (left: ${!leftTile}, right: ${!rightTile})`);
 
           if (!hasSpace) {
-            console.log('⚠️ Meld is touching another meld, relocating...');
             const newLocation = findEmptySpaceForMeld(meldTiles.length);
 
             if (newLocation) {
-              console.log(`✨ Relocating meld to new position (${newLocation.x}, ${newLocation.y})`);
               await relocateMeld(meldTiles, newLocation);
-            } else {
-              console.warn('⚠️ No empty space found for meld relocation');
             }
           }
         }, 100);
@@ -238,10 +227,7 @@ function App() {
 
   // Listen for game reset events
   useEffect(() => {
-    console.log('🎧 Setting up game-reset listener...');
     const cleanup = onGameReset((newGameState: any) => {
-      console.log('🔄 Game reset event received from server!', newGameState);
-
       // Reset the game state to lobby
       useGameStore.setState({
         id: channelId || '',
@@ -249,7 +235,7 @@ function App() {
         players: newGameState.players || [],
         currentPlayerIndex: 0,
         board: [],
-        pool: [], // Pool is not sent to client for security, just track size
+        pool: [],
         turnStartBoard: [],
         myHand: { tiles: [] },
         canDraw: false,
@@ -259,14 +245,9 @@ function App() {
         turnTimerDuration: 60,
         turnTimeRemaining: 0,
       });
-
-      console.log('✅ Game reset to lobby - ready for new game!');
     });
 
-    return () => {
-      console.log('🎧 Cleaning up game-reset listener');
-      cleanup();
-    };
+    return cleanup;
   }, [onGameReset, channelId]);
 
   const isMyTurn = myPlayerId && players[currentPlayerIndex]?.id === myPlayerId;
@@ -282,12 +263,10 @@ function App() {
 
     // Prevent multiple simultaneous timeout handlers
     if (isHandlingTimeout.current) {
-      console.log('⏰ Already handling timeout, skipping...');
       return;
     }
 
     isHandlingTimeout.current = true;
-    console.log('⏰ Time expired - undoing turn and ending');
 
     // Undo the turn first (return tiles to hand)
     await undoTurn(channelId, myPlayerId);
@@ -333,7 +312,6 @@ function App() {
 
       // Auto-end turn when timer reaches 0 (only for current player)
       if (remainingSec === 0 && isMyTurn) {
-        console.log('⏰ Timer expired! Auto-ending turn...');
         handleTimeExpired();
       }
     }, 100); // Update every 100ms for smoother countdown
@@ -346,7 +324,6 @@ function App() {
   const handleStartGame = async (turnTimer: number) => {
     if (!channelId) return;
 
-    console.log('🎮 Starting game with timer:', turnTimer);
     await startGame(channelId, turnTimer);
 
     // Fetch hand after game starts
@@ -359,16 +336,14 @@ function App() {
     if (!channelId || !myPlayerId) return;
 
     try {
-      console.log('🎴 Drawing tile');
-
       // Draw the tile from server first
       const drawnTile = await drawTile(channelId, myPlayerId);
 
       // Set the drawn tile ID for visual cue
       setDrawnTileId(drawnTile.id);
     } catch (error: any) {
-      console.error('❌ Draw failed:', error);
-      setDrawnTileId(null); // Clear on error
+      console.error('Draw failed:', error);
+      setDrawnTileId(null);
       // Show error if pool is empty
       if (error.message.includes('pool')) {
         setTurnError('No tiles left to draw!');
@@ -381,12 +356,10 @@ function App() {
     if (!channelId) return;
 
     try {
-      console.log('🔄 Attempting to end turn');
       await endTurn(channelId, myPlayerId || undefined);
       setTurnError(null);
-      console.log('✅ Turn ended successfully');
     } catch (error: any) {
-      console.error('❌ End turn failed:', error);
+      console.error('End turn failed:', error);
 
       // Extract error data from response
       const errorData = error.response?.data;
@@ -405,15 +378,11 @@ function App() {
 
   const handleUndoTurn = async () => {
     if (!channelId || !myPlayerId) return;
-
-    console.log('↩️ Undoing turn');
     await undoTurn(channelId, myPlayerId);
   };
 
   const handleUndoLastAction = async () => {
     if (!channelId || !myPlayerId) return;
-
-    console.log('↩️ Undoing last action');
     await undoLastAction(channelId, myPlayerId);
   };
 
@@ -463,8 +432,6 @@ function App() {
     // Sort tiles by x position to maintain order
     const sortedTiles = [...meldTiles].sort((a, b) => a.position.x - b.position.x);
 
-    console.log(`🔄 Relocating meld of ${sortedTiles.length} tiles to position (${newStartPosition.x}, ${newStartPosition.y})`);
-
     try {
       // Move each tile to its new position
       for (let i = 0; i < sortedTiles.length; i++) {
@@ -478,7 +445,7 @@ function App() {
       }
       return true;
     } catch (error) {
-      console.error('❌ Failed to relocate meld:', error);
+      console.error('Failed to relocate meld:', error);
       return false;
     }
   };
@@ -489,16 +456,12 @@ function App() {
     fromBoard: boolean = false,
     tileId?: string
   ) => {
-    console.log(`🎯 handleTileDrop - position: (${position.x}, ${position.y}), fromBoard: ${fromBoard}, tileId: ${tileId}`);
-
     if (!channelId || !myPlayerId) {
-      console.log('❌ Missing channelId or myPlayerId');
       return;
     }
 
     // Position is already snapped by GameBoard.tsx - use it directly
     const snappedPosition = position;
-    console.log(`📍 Using GameBoard position: (${snappedPosition.x}, ${snappedPosition.y})`);
 
     // Determine setId based on nearby tiles
     let snapToSetId: string | null = null;
@@ -523,8 +486,6 @@ function App() {
 
     // If position is blocked and we're trying to extend an existing meld, relocate it
     if (positionBlocked && snapToSetId && !fromBoard) {
-      console.log('⚠️ Position blocked, attempting to relocate meld...');
-
       // Get all tiles in the target meld
       const meldTiles = getTilesInMeld(snapToSetId);
 
@@ -534,8 +495,6 @@ function App() {
         const newLocation = findEmptySpaceForMeld(newMeldLength);
 
         if (newLocation) {
-          console.log(`✨ Found new location at (${newLocation.x}, ${newLocation.y}) for ${newMeldLength} tiles`);
-
           // Relocate the existing meld
           const relocated = await relocateMeld(meldTiles, newLocation);
 
@@ -544,7 +503,6 @@ function App() {
             const sortedMeld = [...meldTiles].sort((a, b) => a.position.x - b.position.x);
 
             // Determine if new tile should go at start or end
-            // Check which side it was originally trying to extend
             const firstMeldX = sortedMeld[0].position.x;
             const lastMeldX = sortedMeld[sortedMeld.length - 1].position.x;
             const isExtendingRight = snappedPosition.x > lastMeldX || snappedPosition.x < firstMeldX ? snappedPosition.x > lastMeldX : true;
@@ -555,14 +513,12 @@ function App() {
 
             // If extending left, we need to shift all tiles by 1
             if (!isExtendingRight) {
-              console.log('📍 Extending left, shifting meld positions');
               const shiftedLocation = { x: newLocation.x + 1, y: newLocation.y };
               await relocateMeld(meldTiles, shiftedLocation);
             }
 
-            console.log(`🎴 Placing new tile at relocated position (${newTilePosition.x}, ${newTilePosition.y})`);
             await placeTile(channelId, myPlayerId, tile, newTilePosition, setId);
-            return; // Success!
+            return;
           } else {
             setTurnError('Failed to relocate meld');
             setTimeout(() => setTurnError(null), 3000);
@@ -579,11 +535,9 @@ function App() {
     try {
       if (fromBoard && tileId) {
         // Moving existing tile on board
-        console.log('🔄 Moving tile on board with setId:', setId, 'at position:', snappedPosition);
         await moveTile(channelId, tileId, snappedPosition, setId);
       } else {
         // Placing new tile from hand
-        console.log('🎴 Placing tile with setId:', setId, 'at position:', snappedPosition);
         await placeTile(channelId, myPlayerId, tile, snappedPosition, setId);
 
         // Mark this setId for relocation check after board state updates
@@ -627,7 +581,6 @@ function App() {
 
   const handleToggleReady = (playerId: string) => {
     if (!channelId) return;
-    console.log('Toggle ready for player:', playerId);
     toggleReady(channelId, playerId);
   };
 
@@ -684,25 +637,18 @@ function App() {
             onUndo={handleUndoTurn}
             onUndoLast={handleUndoLastAction}
             onReset={async () => {
-              console.log('🔄 onReset called, channelId:', channelId);
               if (channelId && participants) {
-                console.log('📤 Re-initializing game with reset flag...');
                 // Re-initialize the game instead of just deleting it
                 // This creates a new game for all players
                 const playersList: Player[] = Array.from(participants.values()).map(p => ({
                   id: p.id,
-                  username: (p as any).global_name || p.username, // Use display name if available
-                  avatar: p.avatar, // Use avatar directly from Discord SDK
+                  username: (p as any).global_name || p.username,
+                  avatar: p.avatar,
                   tilesCount: 0,
                   hasPlayedInitial: false,
                   isReady: false,
                 }));
-                await initializeGame(channelId, playersList, true); // reset: true
-                console.log('✅ Game reset complete - waiting for server broadcast to reload...');
-                // Don't reload here - let the 'game-reset' event listener handle it
-                // This prevents double-reloading for the initiating player
-              } else {
-                console.warn('⚠️ No channelId or participants available for reset');
+                await initializeGame(channelId, playersList, true);
               }
             }}
             poolSize={pool.length}

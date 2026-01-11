@@ -52,26 +52,15 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
       },
       drop: (item, monitor) => {
         setDragPosition(null);
-        console.log('🚨 Drop handler called!');
 
         const offset = monitor.getClientOffset();
         if (offset) {
-          console.log(`📍 Mouse offset: (${offset.x}, ${offset.y})`);
-
           const boardElement = document.getElementById('game-board');
           if (boardElement) {
             const rect = boardElement.getBoundingClientRect();
-            console.log(`📏 Board rect: left=${rect.left.toFixed(1)}, top=${rect.top.toFixed(1)}, width=${rect.width.toFixed(1)}, height=${rect.height.toFixed(1)}`);
-
             const position = calculateGridPosition(offset, rect);
-            console.log(`📐 Snapped to cell: (${position.x}, ${position.y})`);
-
             onTileDrop(item.tile, position, item.fromBoard, item.tile.id);
-          } else {
-            console.log('❌ Board element not found');
           }
-        } else {
-          console.log('❌ No offset');
         }
       },
       collect: (monitor) => ({
@@ -112,7 +101,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
           flexShrink: 0,
         }}
       >
-      {/* DEBUG: Show grid cell borders */}
+      {/* Show grid cell borders */}
       {Array.from({ length: 25 * 10 }).map((_, index) => {
         const x = index % 25;
         const y = Math.floor(index / 25);
@@ -126,16 +115,11 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
               gridRow: y + 1,
               border: '1px solid rgba(255, 255, 255, 0.05)',
             }}
-          >
-            {/* Cell coordinate label for debugging */}
-            <div className="absolute top-0 left-0 text-white/20 text-xs pointer-events-none">
-              {x},{y}
-            </div>
-          </div>
+          />
         );
       })}
 
-      {/* Smooth floating drop zone highlight - positioned absolutely */}
+      {/* Smooth floating drop zone highlight */}
       {dragPosition && (
         <div
           className="absolute pointer-events-none z-20 rounded-lg"
@@ -155,7 +139,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({ tiles, onTileDrop }) => {
         </div>
       )}
 
-      {/* Tiles on board - positioned absolutely with smooth transitions */}
+      {/* Tiles on board */}
       {tiles.map((tile) => (
         <div
           key={tile.id}

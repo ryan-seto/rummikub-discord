@@ -30,23 +30,17 @@ export function useDiscordSDK(): UseDiscordSDKReturn {
 
     async function setupDiscord() {
       try {
-        console.log('Step 1: Getting client ID from env');
         const clientId = import.meta.env.VITE_DISCORD_CLIENT_ID;
 
         if (!clientId) {
           throw new Error('VITE_DISCORD_CLIENT_ID is not set');
         }
-        console.log('Step 1: Client ID found:', clientId);
 
-        console.log('Step 2: Initializing Discord SDK');
         const sdk = new DiscordSDK(clientId);
         setDiscordSdk(sdk);
 
-        console.log('Step 3: Waiting for SDK ready');
         await sdk.ready();
-        console.log('Step 3: SDK is ready!');
 
-        console.log('Step 4: Authorizing with Discord');
         const { code } = await sdk.commands.authorize({
           client_id: clientId,
           response_type: 'code',
@@ -54,9 +48,7 @@ export function useDiscordSDK(): UseDiscordSDKReturn {
           prompt: 'none',
           scope: ['identify', 'guilds', 'guilds.members.read'],
         });
-        console.log('Step 4: Got authorization code');
 
-        console.log('Step 5: Exchanging code for token');
         // Use /api prefix to route through Discord's proxy
         const response = await fetch('/api/token', {
           method: 'POST',
@@ -66,37 +58,30 @@ export function useDiscordSDK(): UseDiscordSDKReturn {
           body: JSON.stringify({ code }),
         });
 
-        console.log('Step 5: Token response status:', response.status);
-
         if (!response.ok) {
           const errorText = await response.text();
-          console.error('Step 5 FAILED: Token exchange error:', errorText);
+          console.error('Token exchange error:', errorText);
           throw new Error(`Token exchange failed (${response.status}): ${errorText}`);
         }
 
         const tokenData = await response.json();
-        console.log('Step 5: Got token data');
 
         if (!tokenData.access_token) {
           throw new Error('No access token in response');
         }
 
-        console.log('Step 6: Authenticating with access token');
         const authResult = await sdk.commands.authenticate({
           access_token: tokenData.access_token,
         });
-        console.log('Step 6: Authentication successful!');
 
         setAuth(authResult);
 
         if (authResult.user) {
           setUser(authResult.user as DiscordUser);
-          console.log('Got user:', authResult.user);
         }
 
         const channel = sdk.channelId;
         setChannelId(channel || null);
-        console.log('Got channel ID:', channel);
 
         // Subscribe to participant updates
         sdk.subscribe('ACTIVITY_INSTANCE_PARTICIPANTS_UPDATE', (data) => {
@@ -121,12 +106,10 @@ export function useDiscordSDK(): UseDiscordSDKReturn {
           setParticipants(participantList);
         }
 
-        console.log('SUCCESS: All setup complete!');
         setIsReady(true);
       } catch (err) {
-        console.error('FATAL ERROR in setupDiscord:', err);
+        console.error('Error in setupDiscord:', err);
         const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-        console.error('Error message:', errorMessage);
         setError(errorMessage);
       }
     }
